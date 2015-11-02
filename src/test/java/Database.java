@@ -20,14 +20,18 @@ public class Database {
 
 	public Database(String nodeName) {
 		this.nodeName = nodeName;
-		this.factory = new OrientGraphFactory("plocal:" + getPath()).setupPool(5, 100);
 	}
 
 	public String getPath() {
-		return new File("target/" + nodeName).getAbsolutePath();
+		return new File("databases/db_" + nodeName).getAbsolutePath();
+	}
+
+	public void setupFactory() {
+		this.factory = new OrientGraphFactory("plocal:" + getPath()).setupPool(5, 100);
 	}
 
 	public OrientGraphFactory getFactory() {
+
 		return factory;
 	}
 

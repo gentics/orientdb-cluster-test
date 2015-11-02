@@ -1,7 +1,6 @@
 {
   "autoDeploy": true,
-  "hotAlignment": true,
-  "resyncEvery": 15,
+  "hotAlignment": false,
   "executionMode": "undefined",
   "readQuorum": 1,
   "writeQuorum": 2,

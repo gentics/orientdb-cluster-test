@@ -132,7 +132,7 @@
 	</network>
 	<!-- 
 	<storages>
-		<storage name="graphdb%NODENAME%" path="%DB_PATH%" userName="admin" userPassword="admin" loaded-at-startup="true"/>
+		<storage name="db_%NODENAME%" path="%DB_PATH%" userName="admin" userPassword="admin" loaded-at-startup="true"/>
 	</storages>
 	 -->
 	<users>
