@@ -58,10 +58,10 @@ public class Database {
 //		IOUtils.copy(ins, new FileOutputStream(new File(pluginDirectory, "studio-2.1.zip")));
 
 		server.startup(getOrientServerConfig());
-		OServerPluginManager manager = new OServerPluginManager();
-		manager.config(server);
+		//OServerPluginManager manager = new OServerPluginManager();
+		//manager.config(server);
 		server.activate();
-		manager.startup();
+		//manager.startup();
 	}
 
 }

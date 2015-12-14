@@ -5,6 +5,13 @@
 	<artifactId>orientdb-cluster-test</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
+	<packaging>pom</packaging>
+	<modules>
+		<module>shared</module>
+		<module>nodeA</module>
+		<module>nodeB</module>
+	</modules>
+
 	<properties>
 		<orientdb.version>2.1.2</orientdb.version>
 	</properties>
