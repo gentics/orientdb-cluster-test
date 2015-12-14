@@ -1,6 +1,6 @@
 package de.jotschi.orientdb.test;
+
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -11,29 +11,15 @@ import org.apache.commons.io.IOUtils;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
 public class Database {
 
-	private OrientGraphFactory factory;
 	private String nodeName;
 
 	public Database(String nodeName) {
 		this.nodeName = nodeName;
 	}
 
-	public String getPath() {
-		return new File("databases/db_" + "nodeA").getAbsolutePath();
-	}
-
-	public void setupFactory() {
-		this.factory = new OrientGraphFactory("plocal:" + getPath()).setupPool(5, 100);
-	}
-
-	public OrientGraphFactory getFactory() {
-
-		return factory;
-	}
 
 	private InputStream getOrientServerConfig() throws IOException {
 		InputStream configIns = getClass().getResourceAsStream("/config/orientdb-server-config.xml");
@@ -44,7 +30,6 @@ public class Database {
 		configString = configString.replaceAll("%CONSOLE_LOG_LEVEL%", "finest");
 		configString = configString.replaceAll("%FILE_LOG_LEVEL%", "fine");
 		configString = configString.replaceAll("%NODENAME%", nodeName);
-		configString = configString.replaceAll("%DB_PATH%", "plocal:" + getPath());
 		InputStream stream = new ByteArrayInputStream(configString.getBytes(StandardCharsets.UTF_8));
 		return stream;
 	}
@@ -52,16 +37,16 @@ public class Database {
 	public void startOrientServer() throws Exception {
 		OServer server = OServerMain.create();
 
-//		InputStream ins = getClass().getResourceAsStream("/plugins/studio-2.1.zip");
-//		File pluginDirectory = new File("orient-plugins");
-//		pluginDirectory.mkdirs();
-//		IOUtils.copy(ins, new FileOutputStream(new File(pluginDirectory, "studio-2.1.zip")));
+		// InputStream ins = getClass().getResourceAsStream("/plugins/studio-2.1.zip");
+		// File pluginDirectory = new File("orient-plugins");
+		// pluginDirectory.mkdirs();
+		// IOUtils.copy(ins, new FileOutputStream(new File(pluginDirectory, "studio-2.1.zip")));
 
 		server.startup(getOrientServerConfig());
-		//OServerPluginManager manager = new OServerPluginManager();
-		//manager.config(server);
+		OServerPluginManager manager = new OServerPluginManager();
+		manager.config(server);
 		server.activate();
-		//manager.startup();
+		manager.startup();
 	}
 
 }

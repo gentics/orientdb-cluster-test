@@ -1,9 +1,11 @@
 package de.jotschi.orientdb.test;
 
+import java.io.File;
+
 import org.junit.Test;
 
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 
 public class OrientDBClusterTest extends AbstractClusterTest {
 
@@ -14,15 +16,12 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		start(nodeName);
 
 		System.in.read();
-		db.setupFactory();
-		OrientGraphNoTx graph = db.getFactory().getNoTx();
-
+		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File("databases/db_testdb").getAbsolutePath());
 		while(true) {
-			Vertex v = graph.addVertex(null);
+			Vertex v = factory.getNoTx().addVertex(null);
 			v.setProperty("name", "SOME VALUE");
-			System.out.println("Count: " + graph.countVertices());
+			System.out.println("Count: " + factory.getNoTx().countVertices());
 			Thread.sleep(500);
-			graph.commit();
 		}
 	}
 }
