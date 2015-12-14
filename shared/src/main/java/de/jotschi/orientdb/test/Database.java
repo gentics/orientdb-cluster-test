@@ -23,7 +23,7 @@ public class Database {
 	}
 
 	public String getPath() {
-		return new File("databases/db_" + nodeName).getAbsolutePath();
+		return new File("databases/db_" + "nodeA").getAbsolutePath();
 	}
 
 	public void setupFactory() {

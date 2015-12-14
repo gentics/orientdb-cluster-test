@@ -1,9 +1,9 @@
 {
   "autoDeploy": true,
-  "hotAlignment": false,
-  "executionMode": "undefined",
+  "hotAlignment": true,
+  "executionMode": "asynchronous",
   "readQuorum": 1,
-  "writeQuorum": 2,
+  "writeQuorum": 1,
   "failureAvailableNodesLessQuorum": false,
   "readYourWrites": true,
   "servers": {
