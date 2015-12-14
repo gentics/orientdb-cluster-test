@@ -1,18 +1,22 @@
+package de.jotschi.orientdb.test;
+
+import org.junit.Test;
+
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 
-public class AbstractClusterTest {
+public class OrientDBClusterTest extends AbstractClusterTest {
 
-	public void start(String name) throws Exception {
-		Database db = new Database(name);
-		db.startOrientServer();
+	private final String nodeName = "nodeA";
+
+	@Test
+	public void testCluster() throws Exception {
+		start(nodeName);
 
 		db.setupFactory();
 		OrientGraphNoTx graph = db.getFactory().getNoTx();
 
 		for (int i = 0; i < 1000000; i++) {
-			if ("nodeA".equalsIgnoreCase(name)) {
-				graph.addVertex(null);
-			}
+			graph.addVertex(null);
 			System.out.println("Count: " + graph.countVertices());
 			Thread.sleep(1500);
 		}
