@@ -17,7 +17,7 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 
 		System.in.read();
 		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File("databases/db_testdb").getAbsolutePath());
-		while(true) {
+		while (true) {
 			Vertex v = factory.getNoTx().addVertex(null);
 			v.setProperty("name", "SOME VALUE");
 			System.out.println("Count: " + factory.getNoTx().countVertices());
@@ -25,4 +25,3 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		}
 	}
 }
-

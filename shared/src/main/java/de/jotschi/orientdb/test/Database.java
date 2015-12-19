@@ -1,6 +1,7 @@
 package de.jotschi.orientdb.test;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -20,7 +21,6 @@ public class Database {
 		this.nodeName = nodeName;
 	}
 
-
 	private InputStream getOrientServerConfig() throws IOException {
 		InputStream configIns = getClass().getResourceAsStream("/config/orientdb-server-config.xml");
 		StringWriter writer = new StringWriter();
@@ -35,12 +35,9 @@ public class Database {
 	}
 
 	public void startOrientServer() throws Exception {
+		String orientdbHome = new File("").getAbsolutePath();
+		System.setProperty("ORIENTDB_HOME", orientdbHome);
 		OServer server = OServerMain.create();
-
-		// InputStream ins = getClass().getResourceAsStream("/plugins/studio-2.1.zip");
-		// File pluginDirectory = new File("orient-plugins");
-		// pluginDirectory.mkdirs();
-		// IOUtils.copy(ins, new FileOutputStream(new File(pluginDirectory, "studio-2.1.zip")));
 
 		server.startup(getOrientServerConfig());
 		OServerPluginManager manager = new OServerPluginManager();
