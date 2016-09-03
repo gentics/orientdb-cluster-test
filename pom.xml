@@ -13,7 +13,7 @@
 	</modules>
 
 	<properties>
-		<orientdb.version>2.1.8</orientdb.version>
+		<orientdb.version>2.2.8</orientdb.version>
 	</properties>
 	<dependencies>
 		<dependency>
