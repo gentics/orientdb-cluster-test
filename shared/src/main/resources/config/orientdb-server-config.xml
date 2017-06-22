@@ -90,8 +90,11 @@
 		<cluster>
 		</cluster>
 	</network>
-	<!-- <storages> <storage name="db_%NODENAME%" path="%DB_PATH%" userName="admin" 
-		userPassword="admin" loaded-at-startup="true" /> </storages> -->
+	<!-- 
+	<storages>
+		<storage name="db_%NODENAME%" path="%DB_PATH%" userName="admin" userPassword="admin" loaded-at-startup="false" />
+	</storages>
+	 -->
 	<users>
 		<user name="root" password="finger" resources="*" />
 		<user name="admin" password="finger" resources="*" />
@@ -104,6 +107,7 @@
 		<entry name="profiler.enabled" value="true" />
 		<!-- <entry name="profiler.config" value="30,10,10" /> -->
 		<entry name="plugin.directory" value="%PLUGIN_DIRECTORY%" />
+		<entry name="server.database.path" value="%DB_PARENT_PATH%"/>
 
 		<!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info, 
 			warning -->

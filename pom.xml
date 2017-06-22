@@ -8,7 +8,6 @@
 	<modules>
 		<module>shared</module>
 		<module>nodeA</module>
-		<module>nodeB</module>
 		<module>testenv</module>
 	</modules>
 

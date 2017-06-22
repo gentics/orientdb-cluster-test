@@ -11,8 +11,8 @@ public class AbstractClusterTest {
 
 	protected Database db;
 
-	public void start(String name) throws Exception {
-		db = new Database(name);
+	public void start(String name, String dbPath) throws Exception {
+		db = new Database(name, dbPath);
 
 		// 1. Start the orient server
 		Runnable t = () -> {
