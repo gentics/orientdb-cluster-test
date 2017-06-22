@@ -17,11 +17,11 @@ import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 public class Database {
 
 	private String nodeName;
-	private String dbPath;
+	private String basePath;
 
-	public Database(String nodeName, String dbPath) {
+	public Database(String nodeName, String basePath) {
 		this.nodeName = nodeName;
-		this.dbPath = dbPath;
+		this.basePath = basePath;
 	}
 
 	private InputStream getOrientServerConfig() throws IOException {
@@ -32,13 +32,13 @@ public class Database {
 		configString = configString.replaceAll("%PLUGIN_DIRECTORY%", "orient-plugins");
 		configString = configString.replaceAll("%CONSOLE_LOG_LEVEL%", "finest");
 		configString = configString.replaceAll("%FILE_LOG_LEVEL%", "fine");
-		configString = configString.replaceAll("%DB_PATH%", "plocal:" + escapePath(dbPath));
+		configString = configString.replaceAll("%DB_PATH%", "plocal:" + escapePath(basePath + "/storage"));
 		configString = configString.replaceAll("%NODENAME%", nodeName);
-		configString = configString.replaceAll("%DB_PARENT_PATH%", escapePath(new File(dbPath).getParent()));
+		configString = configString.replaceAll("%DB_PARENT_PATH%", escapePath(basePath));
 		InputStream stream = new ByteArrayInputStream(configString.getBytes(StandardCharsets.UTF_8));
 		return stream;
 	}
-	
+
 	private String escapePath(String path) {
 		return StringEscapeUtils.escapeJava(StringEscapeUtils.escapeXml11(new File(path).getAbsolutePath()));
 	}

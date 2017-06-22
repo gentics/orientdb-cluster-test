@@ -7,7 +7,7 @@
 	<packaging>pom</packaging>
 	<modules>
 		<module>shared</module>
-		<module>nodeA</module>
+		<module>servers</module>
 		<module>testenv</module>
 	</modules>
 
@@ -16,7 +16,6 @@
 		<elasticsearch.version>2.4.4</elasticsearch.version>
 		<vertx.version>3.4.2</vertx.version>
 	</properties>
-
 
 	<dependencyManagement>
 		<dependencies>

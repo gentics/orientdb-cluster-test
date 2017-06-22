@@ -11,16 +11,15 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
 public class OrientDBClusterTest2 extends AbstractClusterTest {
 
 	private final String nodeName = "nodeB";
-	private final String dbPath = "target/data2/graphdb";
+	private final String basePath = "target/data2/graphdb";
 
 	@Test
 	public void testCluster() throws Exception {
 		// startESNode();
-		start(nodeName, dbPath);
+		start(nodeName, basePath);
 		// startVertx();
-		System.out.println("READY");
 		System.in.read();
-		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File(dbPath).getAbsolutePath());
+		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File(basePath + "/storage").getAbsolutePath());
 		while (true) {
 			OrientGraphNoTx graph = factory.getNoTx();
 			try {
