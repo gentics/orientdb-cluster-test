@@ -13,7 +13,10 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 
 	@Test
 	public void testCluster() throws Exception {
+//		startESNode();
 		start(nodeName);
+//		startVertx();
+		System.out.println("READY");
 		System.in.read();
 		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File("databases/db_testdb").getAbsolutePath());
 		while (true) {

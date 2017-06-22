@@ -13,8 +13,10 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 
 	@Test
 	public void testCluster() throws Exception {
+//		startESNode(nodeName);
 		start(nodeName);
-
+//		startVertx();
+		System.out.println("READY");
 		System.in.read();
 		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File("databases/db_testdb").getAbsolutePath());
 		while (true) {
@@ -24,4 +26,11 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 			Thread.sleep(500);
 		}
 	}
+
+//	@Test
+//	public void testESCluster() throws IOException {
+//		startESNode();
+//		System.in.read();
+//	}
+
 }
