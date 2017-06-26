@@ -17,8 +17,13 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 	public void testCluster() throws Exception {
 		// startESNode();
 		start(nodeName, basePath);
-		// startVertx();
+		startVertx();
 		System.in.read();
+
+		vertx.eventBus().consumer("test", rh -> {
+			System.out.println("Got: " + rh.body() + " from " + rh.address());
+		});
+
 		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File(basePath + "/storage").getAbsolutePath());
 		while (true) {
 			OrientGraphNoTx graph = factory.getNoTx();

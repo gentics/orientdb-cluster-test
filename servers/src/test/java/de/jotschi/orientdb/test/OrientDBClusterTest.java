@@ -15,16 +15,17 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 
 	@Test
 	public void testCluster() throws Exception {
+		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File(basePath + "/storage").getAbsolutePath());
 		// startESNode(nodeName);
 		start(nodeName, basePath);
-		// startVertx();
-		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File(basePath + "/storage").getAbsolutePath());
-
+		startVertx();
 		int i = 0;
 		while (true) {
+			vertx.eventBus().send("test", "someOtherValue");
+			vertx.eventBus().publish("test", "SomeValue");
+
 			OrientGraphNoTx graph = factory.getNoTx();
 			try {
-//				graph.createVertexType("Some" +i);
 				Vertex v = graph.addVertex(null);
 				v.setProperty("name", "SOME VALUE");
 				System.out.println("Count: " + factory.getNoTx().countVertices());

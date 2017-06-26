@@ -18,10 +18,15 @@ public class Database {
 
 	private String nodeName;
 	private String basePath;
+	private OServer server;
 
 	public Database(String nodeName, String basePath) {
 		this.nodeName = nodeName;
 		this.basePath = basePath;
+	}
+
+	public OServer getServer() {
+		return server;
 	}
 
 	private InputStream getOrientServerConfig() throws IOException {
@@ -43,16 +48,17 @@ public class Database {
 		return StringEscapeUtils.escapeJava(StringEscapeUtils.escapeXml11(new File(path).getAbsolutePath()));
 	}
 
-	public void startOrientServer() throws Exception {
+	public OServer startOrientServer() throws Exception {
 		String orientdbHome = new File("").getAbsolutePath();
 		System.setProperty("ORIENTDB_HOME", orientdbHome);
-		OServer server = OServerMain.create();
-
+		this.server = OServerMain.create();
+server.registerLifecycleListener(iListener)
 		server.startup(getOrientServerConfig());
 		OServerPluginManager manager = new OServerPluginManager();
 		manager.config(server);
 		server.activate();
 		manager.startup();
+		return server;
 	}
 
 }
