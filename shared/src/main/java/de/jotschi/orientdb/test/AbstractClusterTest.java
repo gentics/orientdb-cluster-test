@@ -13,27 +13,11 @@ import io.vertx.core.VertxOptions;
 public class AbstractClusterTest {
 
 	protected Database db;
-	
+
 	protected Vertx vertx;
 
-	public void start(String name, String graphDbBasePath) throws Exception {
+	public void initDB(String name, String graphDbBasePath) throws Exception {
 		db = new Database(name, graphDbBasePath);
-
-		// 1. Start the orient server
-		Runnable t = () -> {
-			try {
-				db.startOrientServer();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		};
-		new Thread(t).start();
-
-		// 2. Let the server startup
-		System.out.println("Waiting");
-		Thread.sleep(10000);
-		System.out.println("Waited");
-
 	}
 
 	public void startVertx() throws InterruptedException {

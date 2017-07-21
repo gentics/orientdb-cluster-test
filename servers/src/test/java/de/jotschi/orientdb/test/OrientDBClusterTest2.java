@@ -1,39 +1,46 @@
 package de.jotschi.orientdb.test;
 
-import java.io.File;
-
+import org.junit.Before;
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.Orient;
 import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 public class OrientDBClusterTest2 extends AbstractClusterTest {
 
 	private final String nodeName = "nodeB";
 	private final String basePath = "target/data2/graphdb";
 
+	@Before
+	public void setup() throws Exception {
+		initDB(nodeName, basePath);
+	}
+
 	@Test
 	public void testCluster() throws Exception {
-		// startESNode();
-		start(nodeName, basePath);
-		startVertx();
-		System.in.read();
+		Orient.instance().startup();
 
-		vertx.eventBus().consumer("test", rh -> {
-			System.out.println("Got: " + rh.body() + " from " + rh.address());
-		});
+		// 1. Start the orient server - it will connect to other nodes and replicate the found database
+		db.startOrientServer();
 
-		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File(basePath + "/storage").getAbsolutePath());
+		// 2. Replication may occur directly or we need to wait.
+		db.waitForDB();
+
+		// 3. The db has now been replicated. Lets open the db
+		db.setupPool();
+
+		// 4. Insert some vertices
 		while (true) {
-			OrientGraphNoTx graph = factory.getNoTx();
+			OrientGraph tx = db.getTx();
 			try {
-				Vertex v = factory.getNoTx().addVertex(null);
+				Vertex v = db.getNoTx().addVertex("Product");
 				v.setProperty("name", "SOME VALUE");
-				System.out.println("Count: " + graph.countVertices());
+				System.out.println("Count: " + tx.countVertices());
 				Thread.sleep(1500);
+				tx.commit();
 			} finally {
-				graph.shutdown();
+				tx.shutdown();
 			}
 		}
 
