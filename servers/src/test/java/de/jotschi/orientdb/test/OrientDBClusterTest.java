@@ -18,7 +18,6 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 	@Before
 	public void cleanup() throws Exception {
 		FileUtils.deleteDirectory(new File("target/data1"));
-		FileUtils.deleteDirectory(new File("target/data2"));
 		initDB(nodeName, basePath);
 	}
 

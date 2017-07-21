@@ -1,5 +1,8 @@
 package de.jotschi.orientdb.test;
 
+import java.io.File;
+
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -14,6 +17,7 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 
 	@Before
 	public void setup() throws Exception {
+		FileUtils.deleteDirectory(new File("target/data2"));
 		initDB(nodeName, basePath);
 	}
 
