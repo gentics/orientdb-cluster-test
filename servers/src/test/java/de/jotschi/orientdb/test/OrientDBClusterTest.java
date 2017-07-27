@@ -6,7 +6,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
@@ -23,7 +23,6 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 
 	@Test
 	public void testCluster() throws Exception {
-		Orient.instance().startup();
 
 		// 1. Setup the plocal database
 		db.setupPool();
@@ -35,17 +34,27 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		db.startOrientServer();
 
 		// Now continue to insert some nodes in the database
+		int i = 0;
 		while (true) {
 			OrientGraph tx = db.getTx();
 			try {
-				Vertex v = tx.addVertex("Product");
-				v.setProperty("name", "SOME VALUE");
+				Vertex v = tx.addVertex("class:Product");
+				v.setProperty("name", "A" + i);
 				System.out.println("Count: " + db.getNoTx().countVertices());
 				Thread.sleep(500);
-				tx.commit();
+				try {
+					tx.commit();
+					verifyConsistency(tx, "A");
+					verifyConsistency(tx, "B");
+					i++;
+				} catch (ODistributedRedirectException e) {
+					e.printStackTrace();
+				}
+
 			} finally {
 				tx.shutdown();
 			}
+
 		}
 	}
 }

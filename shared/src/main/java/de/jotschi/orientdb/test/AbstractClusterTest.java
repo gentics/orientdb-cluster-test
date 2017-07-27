@@ -1,11 +1,16 @@
 package de.jotschi.orientdb.test;
 
+import java.util.HashSet;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.node.Node;
 import org.elasticsearch.node.NodeBuilder;
+
+import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -52,5 +57,25 @@ public class AbstractClusterTest {
 		Node node = builder.clusterName("testESCluster").settings(settings).node();
 		// node.start();
 		return node;
+	}
+
+	public void verifyConsistency(OrientGraph tx, String prefix) {
+
+		Set<String> ids = new HashSet<>();
+		for (Vertex v : tx.getVertices()) {
+			String name = v.getProperty("name");
+			if (name.startsWith(prefix)) {
+				// System.out.println(name);
+				ids.add(name);
+			}
+		}
+		System.out.println("prefix: " + prefix + ": " + ids.size());
+		for (int i = 0; i < ids.size(); i++) {
+			String key = prefix + i;
+			if (!ids.contains(key) && ids.contains(prefix + (i + 1))) {
+				org.junit.Assert.fail("Found inconsistency. The entry for key {" + key + "} does not exist but the next does!");
+			}
+		}
+
 	}
 }
