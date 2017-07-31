@@ -15,6 +15,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
@@ -74,9 +75,7 @@ public class Database {
 	}
 
 	public void addVertexType(String typeName, String superTypeName) {
-
 		System.out.println("Adding vertex type for class {" + typeName + "}");
-
 		OrientGraphNoTx noTx = factory.getNoTx();
 		try {
 			OrientVertexType vertexType = noTx.getVertexType(typeName);
@@ -115,6 +114,21 @@ public class Database {
 
 	public OrientGraph getTx() {
 		return factory.getTx();
+	}
+
+	public void addEdgeType(String label) {
+		System.out.println("Adding edge type for label {" + label + "}");
+		OrientGraphNoTx noTx = factory.getNoTx();
+		try {
+			OrientEdgeType e = noTx.getEdgeType(label);
+			if (e == null) {
+				String superClazz = "E";
+				e = noTx.createEdgeType(label, superClazz);
+			}
+		} finally {
+			noTx.shutdown();
+		}
+
 	}
 
 }

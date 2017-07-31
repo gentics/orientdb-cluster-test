@@ -41,8 +41,6 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 				v.setProperty("name", "B" + i);
 				System.out.println("Count: " + tx.countVertices());
 				Thread.sleep(1500);
-				verifyConsistency(tx, "A");
-				verifyConsistency(tx, "B");
 				tx.commit();
 			} finally {
 				tx.shutdown();
