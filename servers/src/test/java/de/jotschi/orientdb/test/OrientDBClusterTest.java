@@ -34,36 +34,32 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		db.setupPool();
 
 		// 2. Add need types to the database
-		db.addVertexType("Product", null);
-		db.addVertexType("Root", null);
-		db.addEdgeType("HAS_ITEM");
+		db.addVertexType("Test", null);
 
-		// 3. Add root vertex which we need later on
-		Object rootId = addRootVertex();
+		// 3. Add the test vertex which we need later on
+		OrientVertex root = addTestVertex();
 
 		// 4. Now start the OServer and provide the database to other nodes
 		db.startOrientServer();
 
-		// Now continue to insert some nodes in the database
+		// Now continue to update the test node
 		int i = 0;
 		while (true) {
 			OrientGraph tx = db.getTx();
 			try {
-				OrientVertex root = loadRoot(rootId, tx);
-				Vertex v = tx.addVertex("class:Product");
-				v.setProperty("name", "A" + i);
-				Edge e = root.addEdge("HAS_ITEM", v);
-				e.setProperty("test", System.currentTimeMillis());
-				System.out.println("Count: " + tx.countVertices());
+				String currentValue = "A" + i;
+				root.reload();
+				root.setProperty("name", currentValue);
 				try {
 					tx.commit();
-					System.out.println("Count: " + tx.countVertices());
-					assertSize(i + 1, root);
+					System.out.println("Updated test vertex..");
+					root.reload();
+					String nameAfterReload = root.getProperty("name");
+					assertEquals(currentValue, nameAfterReload);
 					i++;
 				} catch (ODistributedRedirectException e1) {
 					e1.printStackTrace();
 				}
-
 			} finally {
 				tx.shutdown();
 			}
@@ -71,32 +67,16 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		}
 	}
 
-	private void assertSize(int expectedSize, OrientVertex  root) {
-		root.reload();
-		Iterator<Edge> it = root.getEdges(OUT, "HAS_ITEM").iterator();
-		int count = 0;
-		while (it.hasNext()) {
-			it.next();
-			count++;
-		}
-		assertEquals("Did not find the expected amount of edges.", expectedSize, count);
-
-	}
-
-	private OrientVertex loadRoot(Object rootId, OrientGraph tx) {
-		return tx.getVertex(rootId);
-	}
-
-	private Object addRootVertex() {
-		Object rootId;
+	private OrientVertex addTestVertex() {
+		OrientVertex vertex;
 		OrientGraph tx = db.getTx();
 		try {
-			OrientVertex root = tx.addVertex("class:Root");
-			rootId = root.getId();
+			vertex = tx.addVertex("class:Test");
+			vertex.setProperty("name", "orientdb");
 			tx.commit();
 		} finally {
 			tx.shutdown();
 		}
-		return rootId;
+		return vertex;
 	}
 }

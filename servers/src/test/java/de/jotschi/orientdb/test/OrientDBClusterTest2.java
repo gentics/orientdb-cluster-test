@@ -37,7 +37,7 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 		while (true) {
 			OrientGraph tx = db.getTx();
 			try {
-				Vertex v = db.getNoTx().addVertex("class:Product");
+				Vertex v = tx.addVertex("class:Test");
 				v.setProperty("name", "B" + i);
 				System.out.println("Count: " + tx.countVertices());
 				Thread.sleep(1500);
