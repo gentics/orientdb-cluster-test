@@ -12,7 +12,7 @@
 	</modules>
 
 	<properties>
-		<orientdb.version>2.2.23</orientdb.version>
+		<orientdb.version>2.2.24</orientdb.version>
 		<elasticsearch.version>2.4.4</elasticsearch.version>
 		<vertx.version>3.4.2</vertx.version>
 	</properties>
