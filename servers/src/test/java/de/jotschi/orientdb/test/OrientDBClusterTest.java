@@ -1,18 +1,14 @@
 package de.jotschi.orientdb.test;
 
-import static com.tinkerpop.blueprints.Direction.OUT;
 import static org.junit.Assert.assertEquals;
 
 import java.io.File;
-import java.util.Iterator;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
