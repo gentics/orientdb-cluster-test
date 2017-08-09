@@ -35,8 +35,11 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		// 3. Add the test vertex which we need later on
 		OrientVertex root = addTestVertex();
 
+		db.closePool();
+
 		// 4. Now start the OServer and provide the database to other nodes
 		db.startOrientServer();
+		db.setupPool();
 
 		// Now continue to update the test node
 		int i = 0;
