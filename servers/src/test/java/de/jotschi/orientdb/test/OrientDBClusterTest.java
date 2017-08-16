@@ -8,6 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -30,10 +31,13 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		db.setupPool();
 
 		// 2. Add need types to the database
-		db.addVertexType("Test", null);
+		db.addVertexType("Root", null);
+		for (int i = 0; i < 50; i++) {
+			db.addVertexType("Item" + i, null);
+		}
 
 		// 3. Add the test vertex which we need later on
-		OrientVertex root = addTestVertex();
+		Object id = createRootVertex();
 
 		db.closePool();
 
@@ -42,40 +46,43 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		db.setupPool();
 
 		// Now continue to update the test node
-		int i = 0;
+		int n = 0;
 		while (true) {
 			OrientGraph tx = db.getTx();
+			OrientVertex root = tx.getVertex(id);
 			try {
-				String currentValue = "A" + i;
-				root.reload();
-				root.setProperty("name", currentValue);
-				try {
-					tx.commit();
-					System.out.println("Updated test vertex..");
-					root.reload();
-					String nameAfterReload = root.getProperty("name");
-					assertEquals(currentValue, nameAfterReload);
-					i++;
-				} catch (ODistributedRedirectException e1) {
-					e1.printStackTrace();
-				}
+				// Check the current vertex count (items+root vertex)
+				assertEquals("Somehow the vertex of the last iteration was not persisted.", n + 1, tx.countVertices());
+
+				int rnd = (int) (Math.random() * 50);
+				System.out.println("Adding item for class Item" + rnd);
+				OrientVertex item = tx.addVertex("class:Item" + rnd);
+				root.addEdge("HAS_ITEM", item);
+				n++;
+				tx.commit();
+			} catch (ODistributedRedirectException e) {
+				// Ignoring exception as suggested by #8978
+			} catch (OConcurrentModificationException e) {
+				n--;
+			} catch (Exception e) {
+				e.printStackTrace();
 			} finally {
 				tx.shutdown();
 			}
 			Thread.sleep(500);
 		}
+
 	}
 
-	private OrientVertex addTestVertex() {
-		OrientVertex vertex;
+	private Object createRootVertex() {
 		OrientGraph tx = db.getTx();
 		try {
-			vertex = tx.addVertex("class:Test");
+			OrientVertex vertex = tx.addVertex("class:Root");
 			vertex.setProperty("name", "orientdb");
 			tx.commit();
+			return vertex.getId();
 		} finally {
 			tx.shutdown();
 		}
-		return vertex;
 	}
 }

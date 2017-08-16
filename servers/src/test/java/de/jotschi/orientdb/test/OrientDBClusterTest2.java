@@ -2,12 +2,10 @@ package de.jotschi.orientdb.test;
 
 import java.io.File;
 
-
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 
 public class OrientDBClusterTest2 extends AbstractClusterTest {
@@ -33,22 +31,17 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 		db.setupPool();
 
 		// 4. Insert some vertices
-		int i = 0;
 		while (true) {
 			OrientGraph tx = db.getTx();
 			try {
-				Vertex v = tx.addVertex("class:Test");
-				v.setProperty("name", "B" + i);
 				System.out.println("Count: " + tx.countVertices());
 				Thread.sleep(1500);
-				tx.commit();
+			} catch (Exception e) {
+				e.printStackTrace();
 			} finally {
 				tx.shutdown();
 			}
-			i++;
 		}
-
 	}
 
-	
 }
