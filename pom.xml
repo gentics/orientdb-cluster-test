@@ -13,27 +13,10 @@
 
 	<properties>
 		<orientdb.version>2.2.26</orientdb.version>
-		<elasticsearch.version>2.4.4</elasticsearch.version>
-		<vertx.version>3.4.2</vertx.version>
 	</properties>
 
 	<dependencyManagement>
 		<dependencies>
-			<dependency>
-				<groupId>org.elasticsearch</groupId>
-				<artifactId>elasticsearch</artifactId>
-				<version>${elasticsearch.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>io.vertx</groupId>
-				<artifactId>vertx-core</artifactId>
-				<version>${vertx.version}</version>
-			</dependency>
-			<dependency>
-				<groupId>io.vertx</groupId>
-				<artifactId>vertx-hazelcast</artifactId>
-				<version>${vertx.version}</version>
-			</dependency>
 			<dependency>
 				<groupId>com.orientechnologies</groupId>
 				<artifactId>orientdb-core</artifactId>
