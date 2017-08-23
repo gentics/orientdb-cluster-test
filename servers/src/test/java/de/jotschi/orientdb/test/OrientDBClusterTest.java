@@ -47,7 +47,7 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		long n = 0;
 		OrientGraph tx1 = db.getTx();
 		try {
-			n = tx1.countVertices() - 1;
+			n = tx1.countVertices();
 		} finally {
 			tx1.shutdown();
 		}
@@ -60,7 +60,7 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 			OrientVertex root = tx.getVertex(id);
 			try {
 				// Check the current vertex count (items+root vertex)
-				assertEquals("Somehow the vertex of the last iteration was not persisted.", n + 1, tx.countVertices());
+				assertEquals("Somehow the vertex of the last iteration was not persisted.", n, tx.countVertices());
 
 				// Check whether we need to choose a new vertex class
 				if (vertexClass == null) {
@@ -76,6 +76,7 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 				vertexClass = null;
 			} catch (ONeedRetryException e) {
 				System.out.println("\nNeed to retry for " + vertexClass);
+				e.printStackTrace();
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {
