@@ -14,7 +14,7 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 	private final String basePath = "target/data2/graphdb";
 
 	@Before
-	public void setup() throws Exception {
+	public void cleanup() throws Exception {
 		FileUtils.deleteDirectory(new File("target/data2"));
 		initDB(nodeName, basePath);
 	}

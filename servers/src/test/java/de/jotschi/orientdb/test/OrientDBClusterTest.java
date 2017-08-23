@@ -8,8 +8,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
-import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -45,25 +44,38 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		db.startOrientServer();
 		db.setupPool();
 
+		long n = 0;
+		OrientGraph tx1 = db.getTx();
+		try {
+			n = tx1.countVertices() - 1;
+		} finally {
+			tx1.shutdown();
+		}
+
 		// Now continue to update the test node
-		int n = 0;
+		String vertexClass = null;
 		while (true) {
+
 			OrientGraph tx = db.getTx();
 			OrientVertex root = tx.getVertex(id);
 			try {
 				// Check the current vertex count (items+root vertex)
 				assertEquals("Somehow the vertex of the last iteration was not persisted.", n + 1, tx.countVertices());
 
-				int rnd = (int) (Math.random() * 50);
-				System.out.println("Adding item for class Item" + rnd);
-				OrientVertex item = tx.addVertex("class:Item" + rnd);
+				// Check whether we need to choose a new vertex class
+				if (vertexClass == null) {
+					int rnd = (int) (Math.random() * 50);
+					vertexClass = "class:Item" + rnd;
+				}
+				System.out.println("Adding item for class Item: " + vertexClass);
+				OrientVertex item = tx.addVertex(vertexClass);
 				root.addEdge("HAS_ITEM", item);
-				n++;
 				tx.commit();
-			} catch (ODistributedRedirectException e) {
-				// Ignoring exception as suggested by #8978
-			} catch (OConcurrentModificationException e) {
-				n--;
+				System.out.println("Adding " + vertexClass + " was successful.");
+				n++;
+				vertexClass = null;
+			} catch (ONeedRetryException e) {
+				System.out.println("\nNeed to retry for " + vertexClass);
 			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {
