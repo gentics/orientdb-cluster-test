@@ -17,13 +17,13 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
  */
 public class NodeAInitTest extends AbstractClusterTest {
 
-	private final String nodeName = "nodeA";
 	private final String basePath = "target/data1/graphdb";
 
 	@Before
 	public void cleanup() throws Exception {
 		FileUtils.deleteDirectory(new File("target/data1"));
-		initDB(nodeName, basePath);
+		FileUtils.deleteDirectory(new File("target/data2"));
+		initDB(null, basePath);
 	}
 
 	@Test

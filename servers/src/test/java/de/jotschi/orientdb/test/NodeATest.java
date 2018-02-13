@@ -28,7 +28,8 @@ public class NodeATest extends AbstractClusterTest {
 			OrientGraph tx = db.getTx();
 			try {
 				OrientVertexType type = tx.getVertexType("Item0");
-				System.out.println("Count: " + tx.countVertices() + " type: " + type);
+				OrientVertexType type2 = tx.getVertexType("Item0".toLowerCase());
+				System.out.println("Count: " + tx.countVertices() + " type: " + type + " type2: " + type2);
 			} finally {
 				tx.shutdown();
 			}
