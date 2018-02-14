@@ -132,8 +132,10 @@ public class Database {
 	}
 
 	public void closePool() {
-		factory.close();
-		factory = null;
+		if (factory != null) {
+			factory.close();
+			factory = null;
+		}
 	}
 
 }

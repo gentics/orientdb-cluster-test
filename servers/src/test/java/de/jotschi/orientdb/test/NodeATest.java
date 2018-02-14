@@ -3,9 +3,6 @@ package de.jotschi.orientdb.test;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
-
 public class NodeATest extends AbstractClusterTest {
 
 	private final String nodeName = "nodeA";
@@ -21,21 +18,13 @@ public class NodeATest extends AbstractClusterTest {
 
 		// Start the OServer and provide the database to other nodes
 		db.startOrientServer();
+		System.out.println("Started NodeA");
 		db.setupPool();
+		registerShutdown();
 
-		// Continue to read the node
-		while (true) {
-			OrientGraph tx = db.getTx();
-			try {
-				OrientVertexType type = tx.getVertexType("Item0");
-				OrientVertexType type2 = tx.getVertexType("Item0".toLowerCase());
-				System.out.println("Count: " + tx.countVertices() + " type: " + type + " type2: " + type2);
-			} finally {
-				tx.shutdown();
-			}
-			Thread.sleep(1000);
-		}
+		handeActions("value2a");
 
+		readStatus();
 	}
 
 }

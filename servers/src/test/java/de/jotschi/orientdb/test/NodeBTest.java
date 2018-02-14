@@ -1,10 +1,9 @@
 package de.jotschi.orientdb.test;
 
+import java.io.File;
+
 import org.junit.Before;
 import org.junit.Test;
-
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 public class NodeBTest extends AbstractClusterTest {
 
@@ -18,29 +17,27 @@ public class NodeBTest extends AbstractClusterTest {
 
 	@Test
 	public void testCluster() throws Exception {
+		// Check whether the db has already been replicated once
+		boolean needDb = new File(basePath).exists();
+
 		// 1. Start the orient server - it will connect to other nodes and replicate the found database
 		db.startOrientServer();
+		System.out.println("Started NodeB");
 
 		// 2. Replication may occur directly or we need to wait.
-		db.waitForDB();
+		if (needDb) {
+			System.out.println("Waiting to join the cluster and receive the database.");
+			db.waitForDB();
+		}
 
 		// 3. The DB has now been replicated. Lets open the DB
 		db.setupPool();
+		registerShutdown();
 
-		// 4. Insert some vertices
-		while (true) {
-			OrientGraph tx = db.getTx();
-			try {
-				OrientVertexType type = tx.getVertexType("Item0");
-				OrientVertexType type2 = tx.getVertexType("Item0".toLowerCase());
-				System.out.println("Count: " + tx.countVertices() + " type: " + type + " type2: " + type2);
-				Thread.sleep(1500);
-			} catch (Exception e) {
-				e.printStackTrace();
-			} finally {
-				tx.shutdown();
-			}
-		}
+		handeActions("value2b");
+
+		readStatus();
+
 	}
 
 }
