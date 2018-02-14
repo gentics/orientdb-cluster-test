@@ -15,16 +15,11 @@ public class NodeATest extends AbstractClusterTest {
 
 	@Test
 	public void testCluster() throws Exception {
-
 		// Start the OServer and provide the database to other nodes
 		db.startOrientServer();
 		System.out.println("Started NodeA");
 		db.setupPool();
-		registerShutdown();
-
 		handeActions("value2a");
-
-		readStatus();
 	}
 
 }

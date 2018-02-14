@@ -24,7 +24,7 @@ public class NodeBTest extends AbstractClusterTest {
 		db.startOrientServer();
 		System.out.println("Started NodeB");
 
-		// 2. Replication may occur directly or we need to wait.
+		// 2. Check whether we need to wait for other nodes in the cluster to provide the database
 		if (needDb) {
 			System.out.println("Waiting to join the cluster and receive the database.");
 			db.waitForDB();
@@ -32,12 +32,7 @@ public class NodeBTest extends AbstractClusterTest {
 
 		// 3. The DB has now been replicated. Lets open the DB
 		db.setupPool();
-		registerShutdown();
-
 		handeActions("value2b");
-
-		readStatus();
-
 	}
 
 }
