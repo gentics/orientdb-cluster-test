@@ -31,6 +31,7 @@ public class NodeAInitTest extends AbstractClusterTest {
 
 		// 2. Add need types to the database
 		db.addVertexType("Root", null);
+		db.addVertexType("Item", null);
 
 		// 3. Add the test vertex which we need later on
 		createRootVertex();
