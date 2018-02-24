@@ -1,8 +1,5 @@
 package de.jotschi.orientdb.test;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
@@ -11,33 +8,41 @@ import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
+import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 import io.vertx.ext.web.Router;
 
 public class CRUDVerticle extends AbstractVerticle {
 
 	private static final Logger log = LoggerFactory.getLogger(CRUDVerticle.class);
 	private Database db;
+	private Server server;
 
-	public CRUDVerticle(Database db) {
-		this.db = db;
+	public CRUDVerticle(Server server) {
+		this.server = server;
+		this.db = server.db;
 	}
 
 	@Override
 	public void start(Future<Void> startFuture) throws Exception {
-		HttpServer server = vertx.createHttpServer();
+		HttpServer httpServer = vertx.createHttpServer();
 		Router router = Router.router(vertx);
 		router.route("/").method(HttpMethod.POST).handler(rc -> {
 			rc.request().bodyHandler(bh -> {
 				JsonObject json = bh.toJsonObject();
 				log.info("Command:\n" + json.encodePrettily());
-				handeAction(json);
-				rc.response().end();
+				JsonObject responseJson = handeAction(rc.response(), json);
+				responseJson.put("nodeName", server.getNodeName());
+				responseJson.put("clusterName", server.getClusterName());
+				rc.response().end(responseJson.encodePrettily());
 			});
 		});
 
-		server.requestHandler(router::accept);
-		server.listen(9000, lh -> {
+		httpServer.requestHandler(router::accept);
+		httpServer.listen(9000, lh -> {
 			if (lh.failed()) {
 				startFuture.fail(lh.cause());
 			} else {
@@ -46,79 +51,93 @@ public class CRUDVerticle extends AbstractVerticle {
 		});
 	}
 
-	public void handeAction(JsonObject json) {
+	public JsonObject handeAction(HttpServerResponse response, JsonObject json) {
 		String command = json.getString("command");
 		switch (command) {
 		case "create":
-			createVertex(json.getString("name"));
-			break;
+			return createVertex(json.getString("name"));
 		case "read":
-			readVertex();
-			break;
+			return readVertex();
 		case "delete":
-			deleteVertex(json.getString("name"));
-			break;
+			return deleteVertex(json.getString("name"));
 		case "update":
-			updateVertex(json.getString("name"), json.getString("newName"));
-			break;
+			return updateVertex(json.getString("name"), json.getString("newName"));
 		case "terminate":
-			System.out.println("Closing pool");
+			log.info("Closing pool");
 			db.closePool();
-			System.out.println("Shutting down orientdb server");
+			log.info("Shutting down orientdb server");
 			db.getServer().shutdown();
+			response.end();
 			System.exit(0);
-			break;
 		default:
-			System.out.println("Invalid input..{" + command + "}");
+			log.info("Invalid command: {" + command + "}");
+			response.setStatusCode(400);
+			return new JsonObject().put("result", "Invalid command");
 		}
 	}
 
-	public void createVertex(String name) {
-		System.out.println("Name:");
+	public JsonObject createVertex(String name) {
+		log.info("Creating vertex  with name: " + name);
 		OrientGraph tx = db.getTx();
 		try {
+			JsonObject json = new JsonObject();
 			OrientVertex v = tx.addVertex("class:Item");
 			v.setProperty("name", name);
-			System.out.println("Created vertex {" + v.getId() + "} with name {" + name + "}   ");
+			log.info("Created vertex {" + v.getId() + "} with name {" + name + "}   ");
+			json.put("id", v.getId().toString());
+			json.put("name", name);
+			return json;
 		} finally {
 			tx.shutdown();
 		}
 	}
 
-	public void readVertex() {
+	public JsonObject readVertex() {
 		OrientGraph tx = db.getTx();
 		try {
+			JsonArray array = new JsonArray();
+			JsonObject json = new JsonObject().put("vertices", array);
 			for (Vertex v : tx.getVertices()) {
 				String name = v.getProperty("name");
-				System.out.println("Read vertex {" + v.getId() + "} name: " + name);
+				log.info("Read vertex {" + v.getId() + "} name: " + name);
+				array.add(new JsonObject().put("name", name).put("id", v.getId().toString()));
 			}
+			return json;
 		} finally {
 			tx.shutdown();
 		}
 	}
 
-	private void updateVertex(String name, String newName) {
-		System.out.println("Name of vertex to be updated:");
-		System.out.println("New name:");
+	private JsonObject updateVertex(String name, String newName) {
+		log.info("Name of vertex to be updated:");
+		log.info("New name:");
 		OrientGraph tx = db.getTx();
 		try {
+			JsonArray array = new JsonArray();
+			JsonObject json = new JsonObject().put("updated", array);
 			for (Vertex v : tx.getVertices("name", name)) {
 				v.setProperty("name", newName);
-				System.out.println("Updated vertex {" + v.getId() + "}");
+				log.info("Updated vertex {" + v.getId() + "}");
+				array.add(v.getId().toString());
 			}
+			return json;
 		} finally {
 			tx.shutdown();
 		}
 	}
 
-	private void deleteVertex(String name) {
-		System.out.println("Name:");
+	private JsonObject deleteVertex(String name) {
+		log.info("Name:");
 		OrientGraph tx = db.getTx();
 		try {
+			JsonArray array = new JsonArray();
+			JsonObject json = new JsonObject().put("deleted", array);
 			for (Vertex v : tx.getVertices("name", name)) {
-				System.out.println("Deleting vertex {" + v.getId() + "}");
+				log.info("Deleting vertex {" + v.getId() + "}");
 				v.remove();
+				array.add(v.getId().toString());
 			}
+			return json;
 		} finally {
 			tx.shutdown();
 		}

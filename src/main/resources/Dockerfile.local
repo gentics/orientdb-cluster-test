@@ -1,24 +1,23 @@
 FROM    java:openjdk-8-jre-alpine
 
 USER root
-RUN mkdir /mesh
-RUN adduser -D -u %UID% -h /mesh mesh
-RUN chown mesh: /mesh
-RUN echo "mesh:mesh" | chpasswd
+RUN mkdir /orientdb
+RUN adduser -D -u %UID% -h /orientdb orientdb
+RUN chown orientdb: /orientdb
+RUN echo "orientdb:orientdb" | chpasswd
 
-USER mesh
-WORKDIR /mesh
-ADD bin /mesh/bin
+USER orientdb
+WORKDIR /orientdb
+ADD bin /orientdb/bin
 
 USER root
-RUN mkdir /data && mkdir /config && ln -s /data /mesh/data && chown mesh: /data 
-ADD mesh.yml /config/mesh.yml
-RUN chown mesh: /config -R && ln -s /config /mesh/config
+RUN mkdir /data && mkdir /config && ln -s /data /orientdb/data && chown orientdb: /data 
+RUN chown orientdb: /config -R && ln -s /config /orientdb/config
 
-USER mesh
+USER orientdb
 VOLUME /data
 VOLUME /config
 
-USER mesh
-EXPOSE 8080
+USER orientdb
+EXPOSE 9000
 CMD %CMD% 

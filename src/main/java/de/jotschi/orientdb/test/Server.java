@@ -1,63 +1,111 @@
 package de.jotschi.orientdb.test;
 
 import java.io.File;
+import java.util.concurrent.CountDownLatch;
 
+import com.orientechnologies.orient.core.Orient;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 import io.vertx.core.Vertx;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+import io.vertx.core.logging.SLF4JLogDelegateFactory;
 
 public class Server {
 
-	private final String nodeName = "nodeA";
-	private final String basePath = "target/data1/graphdb";
-	protected Database db;
+	private static Logger log;
 
+	static {
+		System.setProperty(LoggerFactory.LOGGER_DELEGATE_FACTORY_CLASS_NAME, SLF4JLogDelegateFactory.class.getName());
+		log = LoggerFactory.getLogger(Server.class);
+	}
+
+	private String nodeName;
+	private String clusterName;
+
+	private final String basePath = "data";
+	protected Database db;
+	private boolean initGraph = false;
+
+	private CountDownLatch latch = new CountDownLatch(1);
 	private static final Vertx vertx = Vertx.vertx();
 
 	// Environment variables
 	public static final String INIT_CLUSTER = "INIT_CLUSTER";
 	public static final String NODE_NAME_ENV = "NODE_NAME";
 	public static final String CLUSTER_NAME_ENV = "CLUSTER_NAME";
+	public static final String STARTUP_MSG = "SERVER_STARTED";
 
 	public static Vertx getVertx() {
 		return vertx;
 	}
 
 	public static void main(String[] args) throws Exception {
-		new Server().run();
+		boolean initGraph = System.getenv(INIT_CLUSTER) != null;
+		String clusterName = System.getenv(CLUSTER_NAME_ENV);
+		String nodeName = System.getenv(NODE_NAME_ENV);
+		new Server(initGraph, clusterName, nodeName).run();
+	}
+
+	public Server(boolean initGraph, String clusterName, String nodeName) {
+		this.initGraph = initGraph;
+		this.clusterName = clusterName;
+		this.nodeName = nodeName;
+	}
+
+	private void registerShutdownHook() {
+		Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+			try {
+				shutdown();
+			} catch (Exception e) {
+				log.error("Error while shutting down mesh.", e);
+			}
+		}));
+	}
+
+	private void shutdown() {
+		log.info("Shutting down {" + getNodeName() + "}");
+		if (db != null) {
+			db.closePool();
+			Orient.instance().shutdown();
+			db.getServer().shutdown();
+		}
+		vertx.close();
 	}
 
 	public void run() throws Exception {
+		registerShutdownHook();
+		db = new Database(nodeName, basePath);
+		db.init();
 
-		initDB(nodeName, basePath);
-		// Start the OServer and provide the database to other nodes
-		db.startOrientServer();
-		System.out.println("Started NodeA");
-		db.setupPool();
-		startCommandServer(db);
-	}
+		if (initGraph) {
+			log.info("Creating initial graph database");
+			initGraph();
+		}
 
-	private void startCommandServer(Database db) {
-		vertx.deployVerticle(new CRUDVerticle(db));
-	}
-
-	public void setup() throws Exception {
 		// Check whether the db has already been replicated once
 		boolean needDb = new File(basePath).exists();
 
-		// 1. Start the orient server - it will connect to other nodes and replicate the found database
 		db.startOrientServer();
-		System.out.println("Started NodeB");
 
-		// 2. Check whether we need to wait for other nodes in the cluster to provide the database
+		// Check whether we need to wait for other nodes in the cluster to provide the database
 		if (needDb) {
-			System.out.println("Waiting to join the cluster and receive the database.");
+			log.info("Waiting to join the cluster and receive the database.");
 			db.waitForDB();
 		}
 
-		// 3. The DB has now been replicated. Lets open the DB
+		// Start the OServer and provide the database to other nodes
 		db.setupPool();
+		vertx.deployVerticle(new CRUDVerticle(this), rh -> {
+			if (rh.failed()) {
+				log.error("Starting CRUD server failed", rh.cause());
+			} else {
+				log.info(STARTUP_MSG);
+			}
+		});
+
+		latch.await();
 	}
 
 	private Object createRootVertex() {
@@ -85,11 +133,14 @@ public class Server {
 		createRootVertex();
 
 		db.closePool();
-
 	}
 
-	public void initDB(String name, String graphDbBasePath) throws Exception {
-		db = new Database(name, graphDbBasePath);
+	public String getNodeName() {
+		return nodeName;
+	}
+
+	public String getClusterName() {
+		return clusterName;
 	}
 
 }

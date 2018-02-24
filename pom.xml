@@ -32,11 +32,37 @@
 	</dependencyManagement>
 
 	<dependencies>
+		<!-- Logging -->
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<version>1.1.2</version>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>log4j-over-slf4j</artifactId>
+			<version>1.7.25</version>
+		</dependency>
+
+		<!-- Vert.x -->
+		<dependency>
+			<groupId>io.vertx</groupId>
+			<artifactId>vertx-web</artifactId>
+			<version>3.5.0</version>
+		</dependency>
+
+		<!-- Utilities -->
 		<dependency>
 			<groupId>commons-io</groupId>
 			<artifactId>commons-io</artifactId>
 			<version>2.4</version>
 		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-text</artifactId>
+			<version>1.1</version>
+		</dependency>
+
 		<!-- Test dependencies -->
 		<dependency>
 			<groupId>junit</groupId>
@@ -50,16 +76,8 @@
 			<version>1.6.0</version>
 			<scope>test</scope>
 		</dependency>
-		<dependency>
-			<groupId>io.vertx</groupId>
-			<artifactId>vertx-web</artifactId>
-			<version>3.5.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.commons</groupId>
-			<artifactId>commons-text</artifactId>
-			<version>1.1</version>
-		</dependency>
+
+		<!-- OrientDB -->
 		<dependency>
 			<groupId>com.orientechnologies</groupId>
 			<artifactId>orientdb-core</artifactId>

@@ -7,12 +7,11 @@ import static org.junit.Assert.fail;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -21,21 +20,17 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.output.FrameConsumerResultCallback;
-import org.testcontainers.containers.output.OutputFrame;
 import org.testcontainers.containers.output.Slf4jLogConsumer;
-import org.testcontainers.containers.output.ToStringConsumer;
 import org.testcontainers.images.builder.ImageFromDockerfile;
-import org.testcontainers.utility.TestEnvironment;
-
-import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 
 import de.jotschi.orientdb.test.Server;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.json.JsonObject;
 
 /**
- * Test container for a mesh instance which uses local class files. The image for the container will automatically be rebuild during each startup.
+ * Test container for a orientdb instance which uses local class files. The image for the container will automatically be rebuild during each startup.
  */
 public class OrientDBServer extends GenericContainer<OrientDBServer> {
 
@@ -52,11 +47,10 @@ public class OrientDBServer extends GenericContainer<OrientDBServer> {
 	private static ImageFromDockerfile image = prepareDockerImage(true);
 
 	/**
-	 * Action which will be invoked once the mesh instance is ready.
+	 * Action which will be invoked once the orientdb instance is ready.
 	 */
 	private Runnable startupAction = () -> {
-		// vertx.createHttpClient(new HttpClientOptions().setDefaultPort(9000).setDefaultHost(defaultHost)
-		// client = MeshRestClient.create("localhost", getMappedPort(8080), false, vertx);
+		client = vertx.createHttpClient(new HttpClientOptions().setDefaultPort(getMappedPort(9000)).setDefaultHost("localhost"));
 	};
 
 	private StartupLatchingConsumer startupConsumer = new StartupLatchingConsumer(startupAction);
@@ -105,7 +99,6 @@ public class OrientDBServer extends GenericContainer<OrientDBServer> {
 		}
 		new File(dataPath).mkdirs();
 		addFileSystemBind(dataPath, "/data", BindMode.READ_WRITE);
-		// withCreateContainerCmdModifier(it -> it.withVolumes(new Volume("/data")));
 
 		changeUserInContainer();
 		if (initCluster) {
@@ -163,7 +156,14 @@ public class OrientDBServer extends GenericContainer<OrientDBServer> {
 
 	@Override
 	public void stop() {
+		log.info("Stopping node {" + getNodeName() + "} of cluster {" + getClusterName() + "} Id: {" + getContainerId() + "}");
+		dockerClient.stopContainerCmd(getContainerId()).exec();
 		super.stop();
+	}
+
+	@Override
+	public void close() {
+		stop();
 	}
 
 	/**
@@ -187,41 +187,20 @@ public class OrientDBServer extends GenericContainer<OrientDBServer> {
 	public static ImageFromDockerfile prepareDockerImage(boolean enableClustering) {
 		ImageFromDockerfile dockerImage = new ImageFromDockerfile("orientdb-local", true);
 		try {
-			File projectRoot = new File("..");
-
-			// Locate all class folders
-			List<Path> classFolders = Files.walk(projectRoot.toPath()).filter(file -> "classes".equals(file.toFile().getName()))
-				.collect(Collectors.toList());
-
-			// Iterate over all classes in the class folders and add those to the docker context
-			String classPathArg = "";
-			for (Path path : classFolders) {
-				// Prepare the class path argument
-				classPathArg += ":" + path.toFile().getPath().replaceAll("\\.\\.\\/", "bin/");
-				List<Path> classPaths = Files.walk(path).collect(Collectors.toList());
-				for (Path classPath : classPaths) {
-					if (classPath.toFile().isFile()) {
-						File classFile = classPath.toFile();
-						assertTrue("Could not find class file {" + classFile + "}", classFile.exists());
-						String filePath = classPath.toFile().getPath();
-						String dockerPath = filePath.replaceAll("\\.\\.\\/", "bin/");
-						dockerImage.withFileFromFile(dockerPath, classFile);
-					}
-				}
-			}
-			classPathArg = classPathArg.substring(1);
+			String classPathArg = "bin/classes";
+			dockerImage.withFileFromPath("bin/classes", new File("target/classes").toPath());
 
 			// Add maven libs
-			File libFolder = new File("../target/mavendependencies-sharedlibs");
+			File libFolder = new File("target/mavendependencies-sharedlibs");
 			assertTrue("The library folder {" + libFolder + "} could not be found", libFolder.exists());
 			for (File lib : libFolder.listFiles()) {
-				String dockerPath = lib.getPath().replaceAll("\\.\\.\\/", "bin/");
-				classPathArg += ":" + dockerPath;
+				String dockerPath = lib.getPath();
+				classPathArg += ":bin/" + dockerPath;
 			}
-			dockerImage.withFileFromPath("bin/server/target/mavendependencies-sharedlibs", libFolder.toPath());
+			dockerImage.withFileFromPath("bin/target/mavendependencies-sharedlibs", libFolder.toPath());
 
 			// Add sudoers
-			dockerImage.withFileFromString("sudoers", "root ALL=(ALL) ALL\n%mesh ALL=(ALL) NOPASSWD: ALL\n");
+			dockerImage.withFileFromString("sudoers", "root ALL=(ALL) ALL\n%orientdb ALL=(ALL) NOPASSWD: ALL\n");
 
 			String dockerFile = IOUtils.toString(OrientDBServer.class.getResourceAsStream("/Dockerfile.local"));
 			int uid = UnixUtils.getUid();
@@ -266,42 +245,6 @@ public class OrientDBServer extends GenericContainer<OrientDBServer> {
 		return client;
 	}
 
-	public ExecResult execRootInContainer(String... command) throws UnsupportedOperationException, IOException, InterruptedException {
-		Charset outputCharset = UTF8;
-
-		if (!TestEnvironment.dockerExecutionDriverSupportsExec()) {
-			// at time of writing, this is the expected result in CircleCI.
-			throw new UnsupportedOperationException("Your docker daemon is running the \"lxc\" driver, which doesn't support \"docker exec\".");
-		}
-
-		if (!isRunning()) {
-			throw new IllegalStateException("Container is not running so exec cannot be run");
-		}
-
-		this.dockerClient.execCreateCmd(this.containerId).withCmd(command);
-
-		logger().debug("Running \"exec\" command: " + String.join(" ", command));
-		final ExecCreateCmdResponse execCreateCmdResponse = dockerClient.execCreateCmd(this.containerId).withAttachStdout(true).withAttachStderr(true)
-			.withUser("root")
-			// .withPrivileged(true)
-			.withCmd(command).exec();
-
-		final ToStringConsumer stdoutConsumer = new ToStringConsumer();
-		final ToStringConsumer stderrConsumer = new ToStringConsumer();
-
-		FrameConsumerResultCallback callback = new FrameConsumerResultCallback();
-		callback.addConsumer(OutputFrame.OutputType.STDOUT, stdoutConsumer);
-		callback.addConsumer(OutputFrame.OutputType.STDERR, stderrConsumer);
-
-		dockerClient.execStartCmd(execCreateCmdResponse.getId()).exec(callback).awaitCompletion();
-
-		final ExecResult result = new ExecResult(stdoutConsumer.toString(outputCharset), stderrConsumer.toString(outputCharset));
-
-		logger().trace("stdout: " + result.getStdout());
-		logger().trace("stderr: " + result.getStderr());
-		return result;
-	}
-
 	/**
 	 * Expose the debug port to connect to.
 	 * 
@@ -315,7 +258,7 @@ public class OrientDBServer extends GenericContainer<OrientDBServer> {
 	}
 
 	/**
-	 * Wait until the mesh instance is ready.
+	 * Wait until the orientdb instance is ready.
 	 * 
 	 * @return
 	 */
@@ -384,6 +327,17 @@ public class OrientDBServer extends GenericContainer<OrientDBServer> {
 
 	public String getClusterName() {
 		return clusterName;
+	}
+
+	public JsonObject command(JsonObject cmd) throws Exception {
+		CompletableFuture<JsonObject> response = new CompletableFuture<JsonObject>();
+		client.post("/", rh -> {
+			rh.bodyHandler(bh -> {
+				log.info(getNodeName() + "=" + bh.toJsonObject().encodePrettily());
+				response.complete(bh.toJsonObject());
+			});
+		}).end(cmd.encodePrettily());
+		return response.get(10, TimeUnit.SECONDS);
 	}
 
 }

@@ -6,7 +6,8 @@ public class ServerTest {
 
 	@Test
 	public void testCluster() throws Exception {
-		Server server = new Server();
+		Server server = new Server(true, "dummy", "node");
+		server.run();
 	}
 
 }
