@@ -1,5 +1,7 @@
 target
 *.log
+data
+config
 *.iml
 .classpath
 .project
