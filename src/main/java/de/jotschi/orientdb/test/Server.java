@@ -101,7 +101,7 @@ public class Server {
 			if (rh.failed()) {
 				log.error("Starting CRUD server failed", rh.cause());
 			} else {
-				log.info(STARTUP_MSG);
+				System.out.println(STARTUP_MSG);
 			}
 		});
 

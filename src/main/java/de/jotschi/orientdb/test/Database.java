@@ -2,6 +2,8 @@ package de.jotschi.orientdb.test;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -31,6 +33,8 @@ public class Database {
 
 	private static final String ORIENTDB_DISTRIBUTED_CONFIG = "default-distributed-db-config.json";
 
+	private static final String ORIENTDB_STUDIO_ZIP = "orientdb-studio-2.2.33.zip";
+	
 	private static final String ORIENTDB_HAZELCAST_CONFIG = "hazelcast.xml";
 
 	private String nodeName;
@@ -96,6 +100,41 @@ public class Database {
 	private String escapePath(String path) {
 		return StringEscapeUtils.escapeJava(StringEscapeUtils.escapeXml11(new File(path).getAbsolutePath()));
 	}
+	
+	
+	/**
+	 * Check the orientdb plugin directory and extract the orientdb studio plugin if needed.
+	 * 
+	 * @throws FileNotFoundException
+	 * @throws IOException
+	 */
+	private void updateOrientDBPlugin() throws FileNotFoundException, IOException {
+		InputStream ins = getClass().getResourceAsStream("/plugins/" + ORIENTDB_STUDIO_ZIP);
+		File pluginDirectory = new File("orientdb-plugins");
+		pluginDirectory.mkdirs();
+
+		// Remove old plugins
+		boolean currentPluginFound = false;
+		for (File plugin : pluginDirectory.listFiles()) {
+			if (plugin.isFile()) {
+				String filename = plugin.getName();
+				log.debug("Checking orientdb plugin: " + filename);
+				if (filename.equals(ORIENTDB_STUDIO_ZIP)) {
+					currentPluginFound = true;
+					continue;
+				}
+				if (filename.startsWith("orientdb-studio-")) {
+					plugin.delete();
+				}
+			}
+		}
+
+		if (!currentPluginFound) {
+			log.info("Extracting OrientDB Studio");
+			IOUtils.copy(ins, new FileOutputStream(new File(pluginDirectory, ORIENTDB_STUDIO_ZIP)));
+		}
+
+	}
 
 	public OServer startOrientServer() throws Exception {
 		log.info("Starting OrientDB server");
@@ -103,6 +142,7 @@ public class Database {
 		System.setProperty("ORIENTDB_HOME", orientdbHome);
 		if (server == null) {
 			this.server = OServerMain.create();
+			updateOrientDBPlugin();
 		}
 		server.startup(getOrientServerConfig());
 		OServerPluginManager manager = new OServerPluginManager();

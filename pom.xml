@@ -1,5 +1,4 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.jotschi.orientdb</groupId>
 	<artifactId>orientdb-cluster-test</artifactId>
@@ -8,7 +7,7 @@
 	<packaging>jar</packaging>
 
 	<properties>
-		<orientdb.version>2.2.32</orientdb.version>
+		<orientdb.version>2.2.33</orientdb.version>
 	</properties>
 
 	<dependencyManagement>
@@ -42,6 +41,12 @@
 			<groupId>org.slf4j</groupId>
 			<artifactId>log4j-over-slf4j</artifactId>
 			<version>1.7.25</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.gentics.mesh</groupId>
+			<artifactId>mesh-core</artifactId>
+			<version>0.17.0</version>
 		</dependency>
 
 		<!-- Vert.x -->

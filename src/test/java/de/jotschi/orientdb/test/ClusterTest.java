@@ -43,12 +43,13 @@ public class ClusterTest extends AbstractOrientDBTest {
 		Thread.sleep(2000);
 		nodeC = addNode(CLUSTERNAME, "nodeC", false);
 		nodeC.command(new JsonObject().put("command", "create").put("name", "V2"));
+
 		Thread.sleep(2000);
 		nodeB = addNode(CLUSTERNAME, "nodeB", false);
 		nodeB.command(new JsonObject().put("command", "create").put("name", "V2"));
-		
+
 		Thread.sleep(1000);
-		
+
 		nodeA.command(new JsonObject().put("command", "read"));
 		nodeB.command(new JsonObject().put("command", "read"));
 		nodeC.command(new JsonObject().put("command", "read"));
