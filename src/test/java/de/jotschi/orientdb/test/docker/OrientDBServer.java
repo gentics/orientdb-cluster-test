@@ -6,7 +6,6 @@ import static org.junit.Assert.fail;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -30,11 +29,9 @@ import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonObject;
 
 /**
- * Test container for a orientdb instance which uses local class files. The image for the container will automatically be rebuild during each startup.
+ * Test container for a OrientDB instance which uses local class files. The image for the container will automatically be rebuild during each startup.
  */
 public class OrientDBServer extends GenericContainer<OrientDBServer> {
-
-	private static final Charset UTF8 = Charset.forName("UTF-8");
 
 	private static final Logger log = LoggerFactory.getLogger(OrientDBServer.class);
 
@@ -47,7 +44,7 @@ public class OrientDBServer extends GenericContainer<OrientDBServer> {
 	private static ImageFromDockerfile image = prepareDockerImage(true);
 
 	/**
-	 * Action which will be invoked once the orientdb instance is ready.
+	 * Action which will be invoked once the OrientDB instance is ready.
 	 */
 	private Runnable startupAction = () -> {
 		client = vertx.createHttpClient(new HttpClientOptions().setDefaultPort(getMappedPort(9000)).setDefaultHost("localhost"));

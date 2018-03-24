@@ -1,4 +1,6 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>de.jotschi.orientdb</groupId>
 	<artifactId>orientdb-cluster-test</artifactId>
@@ -7,7 +9,8 @@
 	<packaging>jar</packaging>
 
 	<properties>
-		<orientdb.version>2.2.33</orientdb.version>
+		<orientdb.version>2.2.34-SNAPSHOT</orientdb.version>
+		<vertx.version>3.5.0</vertx.version>
 	</properties>
 
 	<dependencyManagement>
@@ -43,13 +46,11 @@
 			<version>1.7.25</version>
 		</dependency>
 
-		<!-- <dependency> <groupId>com.gentics.mesh</groupId> <artifactId>mesh-core</artifactId> <version>0.17.0</version> </dependency> -->
-
 		<!-- Vert.x -->
 		<dependency>
 			<groupId>io.vertx</groupId>
 			<artifactId>vertx-web</artifactId>
-			<version>3.5.0</version>
+			<version>${vertx.version}</version>
 		</dependency>
 
 		<!-- Utilities -->
@@ -124,4 +125,29 @@
 			</plugin>
 		</plugins>
 	</build>
+
+
+	<repositories>
+		<repository>
+			<id>maven.gentics.com</id>
+			<name>Gentics Maven Repository</name>
+			<url>https://maven.gentics.com/maven2</url>
+			<releases>
+				<enabled>true</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+		<repository>
+			<id>snapshots-repo</id>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+			<releases>
+				<enabled>false</enabled>
+			</releases>
+			<snapshots>
+				<enabled>true</enabled>
+			</snapshots>
+		</repository>
+	</repositories>
 </project>
