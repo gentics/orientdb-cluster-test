@@ -21,7 +21,7 @@ public class ClusterTest extends AbstractOrientDBTest {
 	}
 
 	/**
-	 * Tests restarting a a single node in the cluster of two nodes.
+	 * Tests restarting a single node in the cluster of two nodes.
 	 * 
 	 * @throws Exception
 	 */
@@ -45,7 +45,7 @@ public class ClusterTest extends AbstractOrientDBTest {
 		// NodeB: Restart
 		Thread.sleep(2000);
 		nodeB = addNode(CLUSTERNAME, "nodeB", false);
-		//nodeB.command(new JsonObject().put("command", "create").put("name", "V2"));
+		// nodeB.command(new JsonObject().put("command", "create").put("name", "V2"));
 
 		Thread.sleep(1000);
 
@@ -53,6 +53,11 @@ public class ClusterTest extends AbstractOrientDBTest {
 		nodeB.command(new JsonObject().put("command", "read"));
 	}
 
+	/**
+	 * Test restarting two nodes in a cluster of three.
+	 * 
+	 * @throws Exception
+	 */
 	@Test
 	public void testClusterNoRestart3() throws Exception {
 		OrientDBServer nodeA = startInitialServer();

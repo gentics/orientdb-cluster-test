@@ -2,7 +2,7 @@
 
 ## Usage
 
-1. Prepare the shared maven depencencies
+1. Prepare the shared maven dependencies
 
 ```sh
 mvn clean package -DskipTests
