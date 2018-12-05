@@ -6,8 +6,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 
 public class OrientDBClusterTest2 extends AbstractClusterTest {
 
@@ -35,19 +34,31 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 		vertx.eventBus().consumer("dummy", rh -> {
 			System.out.println("Received message: " + rh.body());
 		});
+
+		// Lookup category
+		Object categoryId = tx(tx -> {
+			return tx.getVertices("@class", CATEGORY).iterator().next();
+		});
+
 		// 4. Insert some vertices
-		while (true) {
-			OrientGraph tx = db.getTx();
+		long timer = vertx.setPeriodic(500, ph -> {
 			try {
-				Vertex v = tx.addVertex("class:Product");
-				v.setProperty("name", "SOME VALUE");
-				System.out.println("Count: " + tx.countVertices());
-				Thread.sleep(1500);
-				tx.commit();
-			} finally {
-				tx.shutdown();
+				tx(tx -> {
+					addProduct(tx, categoryId);
+					updateAllProducts(tx);
+					tx.commit();
+					updateAllProducts(tx);
+					System.out.println("Count: " + tx.countVertices());
+					sleep(1500);
+				});
+			} catch (OConcurrentCreateException e) {
+				System.out.println("Ignoring OConcurrentCreateException - normally we would retry the action.");
 			}
-		}
+		});
+
+		System.in.read();
+		vertx.cancelTimer(timer);
 
 	}
+
 }

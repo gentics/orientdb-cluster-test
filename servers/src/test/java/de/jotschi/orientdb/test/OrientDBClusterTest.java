@@ -1,16 +1,12 @@
 package de.jotschi.orientdb.test;
 
 import java.io.File;
-import java.util.function.Function;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 
 public class OrientDBClusterTest extends AbstractClusterTest {
 
@@ -29,46 +25,38 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		db.setupPool();
 
 		// 2. Add a test types to the database
-		db.addVertexType("Product", null);
-		db.addVertexType("Category", null);
+		db.addVertexType(PRODUCT, null);
+		db.addVertexType(CATEGORY, null);
 
 		// 3. Now start the OServer and provide the database to other nodes
 		startVertx();
 		db.startOrientServer();
 
+		// Create category
 		Object categoryId = tx(tx -> {
-			return tx.addVertex("class:Category").getId();
+			return tx.addVertex("class:" + CATEGORY).getId();
 		});
 
 		// Now continue to insert some nodes in the database
-		while (true) {
-			tx(tx -> {
-				OrientVertex category = tx.getVertex(categoryId);
-				vertx.eventBus().publish("dummy", "hello world");
-				Vertex v = tx.addVertex("class:Product");
-				v.setProperty("name", "SOME VALUE");
-				category.addEdge("TEST", v);
+		long timer = vertx.setPeriodic(500, ph -> {
+			try {
+				tx(tx -> {
+					vertx.eventBus().publish("dummy", "hello world");
+					addProduct(tx, categoryId);
+					updateAllProducts(tx);
+					tx.commit();
+					updateAllProducts(tx);
+					System.out.println("Count: " + tx.countVertices());
+					sleep(500);
+				});
+			} catch (OConcurrentCreateException e) {
+				System.out.println("Ignoring OConcurrentCreateException - normally we would retry the action.");
+			}
+		});
 
-				System.out.println("Count: " + db.getNoTx().countVertices());
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-				return null;
-			});
-		}
+		System.in.read();
+		vertx.cancelTimer(timer);
+
 	}
 
-	public <T> T tx(Function<OrientBaseGraph, T> handler) {
-		OrientGraph tx = db.getTx();
-		try {
-			T result = handler.apply(tx);
-			tx.commit();
-			return result;
-		} finally {
-			tx.shutdown();
-		}
-	}
 }
