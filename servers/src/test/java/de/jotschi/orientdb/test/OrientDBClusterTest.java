@@ -1,13 +1,16 @@
 package de.jotschi.orientdb.test;
 
 import java.io.File;
+import java.util.function.Function;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.tinkerpop.blueprints.Vertex;
+import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OrientDBClusterTest extends AbstractClusterTest {
 
@@ -25,26 +28,47 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		// 1. Setup the plocal database
 		db.setupPool();
 
-		// 2. Add a dummy type to the database
+		// 2. Add a test types to the database
 		db.addVertexType("Product", null);
+		db.addVertexType("Category", null);
 
 		// 3. Now start the OServer and provide the database to other nodes
 		startVertx();
 		db.startOrientServer();
 
+		Object categoryId = tx(tx -> {
+			return tx.addVertex("class:Category").getId();
+		});
+
 		// Now continue to insert some nodes in the database
 		while (true) {
-			OrientGraph tx = db.getTx();
-			vertx.eventBus().publish("dummy", "hello world");
-			try {
+			tx(tx -> {
+				OrientVertex category = tx.getVertex(categoryId);
+				vertx.eventBus().publish("dummy", "hello world");
 				Vertex v = tx.addVertex("class:Product");
 				v.setProperty("name", "SOME VALUE");
+				category.addEdge("TEST", v);
+
 				System.out.println("Count: " + db.getNoTx().countVertices());
-				Thread.sleep(500);
-				tx.commit();
-			} finally {
-				tx.shutdown();
-			}
+				try {
+					Thread.sleep(500);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				return null;
+			});
+		}
+	}
+
+	public <T> T tx(Function<OrientBaseGraph, T> handler) {
+		OrientGraph tx = db.getTx();
+		try {
+			T result = handler.apply(tx);
+			tx.commit();
+			return result;
+		} finally {
+			tx.shutdown();
 		}
 	}
 }
