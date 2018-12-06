@@ -7,6 +7,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
+import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OrientDBClusterTest extends AbstractClusterTest {
 
@@ -41,9 +42,11 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		long timer = vertx.setPeriodic(500, ph -> {
 			try {
 				tx(tx -> {
+					OrientVertex category = tx.getVertex(categoryId);
 					vertx.eventBus().publish("dummy", "hello world");
-					addProduct(tx, categoryId);
+					addProduct(tx, category);
 					updateAllProducts(tx);
+					updateRandomEdge(tx, category);
 					tx.commit();
 					updateAllProducts(tx);
 					System.out.println("Count: " + tx.countVertices());

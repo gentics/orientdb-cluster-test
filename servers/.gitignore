@@ -1,1 +1,4 @@
 /target/
+/log1
+/log2
+/.orientdb_history

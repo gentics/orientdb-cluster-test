@@ -1,10 +1,15 @@
 package de.jotschi.orientdb.test;
 
+import static com.tinkerpop.blueprints.Direction.IN;
+import static com.tinkerpop.blueprints.Direction.OUT;
+
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.tinkerpop.blueprints.Direction;
+import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -63,14 +68,24 @@ public class AbstractClusterTest {
 		});
 	}
 
+	public void updateRandomEdge(OrientBaseGraph tx, OrientVertex category) {
+		for (Edge edge : category.getEdges(Direction.OUT, "TEST")) {
+			double rnd = Math.random();
+			System.out.println(rnd);
+			if (rnd > 0.75) {
+				Vertex inV = edge.getVertex(IN);
+				category.addEdge("TEST2", inV);
+			}
+		}
+	}
+
 	public void updateAllProducts(OrientBaseGraph tx) {
 		for (Vertex v : tx.getVertices("@class", PRODUCT)) {
 			v.setProperty("name", System.currentTimeMillis());
 		}
 	}
 
-	public void addProduct(OrientBaseGraph tx, Object categoryId) {
-		OrientVertex category = tx.getVertex(categoryId);
+	public void addProduct(OrientBaseGraph tx, OrientVertex category) {
 		Vertex v = tx.addVertex("class:" + PRODUCT);
 		v.setProperty("name", "SOME VALUE");
 		category.addEdge("TEST", v);
