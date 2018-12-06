@@ -51,7 +51,7 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 			try {
 				tx(tx -> {
 					OrientVertex category = tx.getVertex(categoryId);
-					updateRandomEdge(tx, category);
+					category.setProperty("test", System.currentTimeMillis());
 					System.out.println("Count: " + tx.countVertices());
 				});
 			} catch (OConcurrentCreateException e) {
