@@ -71,10 +71,10 @@ public class AbstractClusterTest {
 	public void updateRandomEdge(OrientBaseGraph tx, OrientVertex category) {
 		for (Edge edge : category.getEdges(Direction.OUT, "TEST")) {
 			double rnd = Math.random();
-			System.out.println(rnd);
 			if (rnd > 0.75) {
 				Vertex inV = edge.getVertex(IN);
 				category.addEdge("TEST2", inV);
+				System.out.println("Adding edge");
 			}
 		}
 	}

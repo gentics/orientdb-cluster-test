@@ -46,11 +46,11 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 			try {
 				tx(tx -> {
 					OrientVertex category = tx.getVertex(categoryId);
-					addProduct(tx, category);
-					updateAllProducts(tx);
+					// addProduct(tx, category);
+					// updateAllProducts(tx);
 					updateRandomEdge(tx, category);
-					tx.commit();
-					updateAllProducts(tx);
+//					tx.commit();
+					//updateAllProducts(tx);
 					System.out.println("Count: " + tx.countVertices());
 					sleep(1500);
 				});

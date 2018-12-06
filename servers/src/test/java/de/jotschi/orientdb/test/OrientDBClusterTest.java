@@ -38,17 +38,25 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 			return tx.addVertex("class:" + CATEGORY).getId();
 		});
 
+		tx(tx -> {
+			for (int i = 0; i < 1000; i++) {
+				OrientVertex category = tx.getVertex(categoryId);
+				addProduct(tx, category);
+			}
+			return null;
+		});
+
 		// Now continue to insert some nodes in the database
 		long timer = vertx.setPeriodic(500, ph -> {
 			try {
 				tx(tx -> {
 					OrientVertex category = tx.getVertex(categoryId);
 					vertx.eventBus().publish("dummy", "hello world");
-					addProduct(tx, category);
-					updateAllProducts(tx);
+					// addProduct(tx, category);
+					// updateAllProducts(tx);
 					updateRandomEdge(tx, category);
-					tx.commit();
-					updateAllProducts(tx);
+					// tx.commit();
+					// updateAllProducts(tx);
 					System.out.println("Count: " + tx.countVertices());
 					sleep(500);
 				});
