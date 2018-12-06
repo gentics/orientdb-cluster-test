@@ -1,7 +1,6 @@
 package de.jotschi.orientdb.test;
 
 import static com.tinkerpop.blueprints.Direction.IN;
-import static com.tinkerpop.blueprints.Direction.OUT;
 
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -71,7 +70,7 @@ public class AbstractClusterTest {
 	public void updateRandomEdge(OrientBaseGraph tx, OrientVertex category) {
 		for (Edge edge : category.getEdges(Direction.OUT, "TEST")) {
 			double rnd = Math.random();
-			if (rnd > 0.75) {
+			if (rnd > 0.98) {
 				Vertex inV = edge.getVertex(IN);
 				category.addEdge("TEST2", inV);
 				System.out.println("Adding edge");

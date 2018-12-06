@@ -32,10 +32,6 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 		// 3. The db has now been replicated. Lets open the db
 		db.setupPool();
 
-		vertx.eventBus().consumer("dummy", rh -> {
-			System.out.println("Received message: " + rh.body());
-		});
-
 		// Lookup category
 		Object categoryId = tx(tx -> {
 			return tx.getVertices("@class", CATEGORY).iterator().next();
@@ -46,13 +42,8 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 			try {
 				tx(tx -> {
 					OrientVertex category = tx.getVertex(categoryId);
-					// addProduct(tx, category);
-					// updateAllProducts(tx);
 					updateRandomEdge(tx, category);
-//					tx.commit();
-					//updateAllProducts(tx);
 					System.out.println("Count: " + tx.countVertices());
-					sleep(1500);
 				});
 			} catch (OConcurrentCreateException e) {
 				System.out.println("Ignoring OConcurrentCreateException - normally we would retry the action.");
