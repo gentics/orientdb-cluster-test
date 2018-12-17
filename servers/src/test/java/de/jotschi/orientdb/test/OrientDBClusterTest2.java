@@ -52,6 +52,8 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 
 		System.in.read();
 		vertx.cancelTimer(timer);
+		sleep(5000);
+		db.getServer().shutdown();
 
 	}
 
