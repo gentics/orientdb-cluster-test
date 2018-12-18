@@ -3,7 +3,7 @@
   "hotAlignment": true,
   "executionMode": "synchronous",
   "readQuorum": 1,
-  "writeQuorum": 1,
+  "writeQuorum": 2,
   "failureAvailableNodesLessQuorum": false,
   "readYourWrites": true,
   "servers": {

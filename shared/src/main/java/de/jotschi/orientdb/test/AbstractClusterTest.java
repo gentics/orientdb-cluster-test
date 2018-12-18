@@ -46,15 +46,15 @@ public class AbstractClusterTest {
 	public <T> T tx(Function<OrientBaseGraph, T> handler) {
 		OrientGraph tx = db.getTx();
 		try {
-			T result = handler.apply(tx);
 			try {
+				T result = handler.apply(tx);
 				tx.commit();
+				return result;
 			} catch (Exception e) {
 				// Explicitly invoke rollback as suggested by luigidellaquila
 				tx.rollback();
 				throw e;
 			}
-			return result;
 		} finally {
 			tx.shutdown();
 		}
