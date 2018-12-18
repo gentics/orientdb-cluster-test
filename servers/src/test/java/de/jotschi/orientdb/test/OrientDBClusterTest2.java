@@ -34,7 +34,7 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 
 		// Lookup category
 		Object categoryId = tx(tx -> {
-			return tx.getVertices("@class", CATEGORY).iterator().next();
+			return tx.getVertices("@class", CATEGORY).iterator().next().getId();
 		});
 
 		// 4. Insert some vertices
