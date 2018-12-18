@@ -6,6 +6,7 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
@@ -17,6 +18,7 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 	@Before
 	public void setup() throws Exception {
 		FileUtils.deleteDirectory(new File("target/data2"));
+		OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(1);
 		initDB(nodeName, basePath);
 	}
 
