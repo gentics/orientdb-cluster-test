@@ -1,14 +1,15 @@
 package de.jotschi.orientdb.test;
 
 import java.io.File;
+import java.util.Iterator;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OrientDBClusterTest2 extends AbstractClusterTest {
 
@@ -36,16 +37,21 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 
 		// Lookup category
 		Object categoryId = tx(tx -> {
-			return tx.getVertices("@class", CATEGORY).iterator().next().getId();
+			Iterator<Vertex> vi = tx.vertices();
+			Vertex v = vi.next();
+			System.out.println("Clazz:"  + v.property("@class"));
+			
+			//.getVertices("@class", CATEGORY).iterator().next().getId();
+			return null;
 		});
 
 		// 4. Insert some vertices
 		long timer = vertx.setPeriodic(500, ph -> {
 			try {
 				tx(tx -> {
-					OrientVertex category = tx.getVertex(categoryId);
+					Vertex category = tx.vertices(categoryId).next();
 					updateRandomEdge(tx, category);
-					System.out.println("Count: " + tx.countVertices());
+					//System.out.println("Count: " + tx.countVertices());
 				});
 			} catch (OConcurrentCreateException e) {
 				System.out.println("Ignoring OConcurrentCreateException - normally we would retry the action.");

@@ -3,12 +3,14 @@ package de.jotschi.orientdb.test;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+
 
 public class OrientDBClusterTest extends AbstractClusterTest {
 
@@ -37,12 +39,12 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 
 		// Create category
 		Object categoryId = tx(tx -> {
-			return tx.addVertex("class:" + CATEGORY).getId();
+			return tx.addVertex("class:" + CATEGORY).id();
 		});
 
 		tx(tx -> {
 			for (int i = 0; i < 1000; i++) {
-				OrientVertex category = tx.getVertex(categoryId);
+				Vertex category = tx.vertices(categoryId).next();
 				addProduct(tx, category);
 			}
 			return null;
@@ -53,7 +55,7 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 			try {
 				tx(tx -> {
 					OrientVertex category = tx.getVertex(categoryId);
-					category.setProperty("test", System.currentTimeMillis());
+					category.property("test", System.currentTimeMillis());
 					System.out.println("Count: " + tx.countVertices());
 				});
 			} catch (OConcurrentCreateException e) {

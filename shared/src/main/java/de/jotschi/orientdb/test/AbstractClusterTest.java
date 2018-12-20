@@ -1,18 +1,13 @@
 package de.jotschi.orientdb.test;
 
-import static com.tinkerpop.blueprints.Direction.IN;
-
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.tinkerpop.blueprints.Direction;
-import com.tinkerpop.blueprints.Edge;
-import com.tinkerpop.blueprints.Vertex;
-import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.structure.Direction;
+import org.apache.tinkerpop.gremlin.structure.Vertex;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -43,7 +38,7 @@ public class AbstractClusterTest {
 		latch.await(10, TimeUnit.SECONDS);
 	}
 
-	public <T> T tx(Function<OrientBaseGraph, T> handler) {
+	public <T> T tx(Function<OrientGraph, T> handler) {
 		OrientGraph tx = db.getTx();
 		try {
 			try {
@@ -56,37 +51,37 @@ public class AbstractClusterTest {
 				throw e;
 			}
 		} finally {
-			tx.shutdown();
+			tx.close();
 		}
 	}
 
-	public void tx(Consumer<OrientBaseGraph> handler) {
+	public void tx(Consumer<OrientGraph> handler) {
 		tx(tx -> {
 			handler.accept(tx);
 			return null;
 		});
 	}
 
-	public void updateRandomEdge(OrientBaseGraph tx, OrientVertex category) {
-		for (Edge edge : category.getEdges(Direction.OUT, "TEST")) {
+	public void updateRandomEdge(OrientGraph tx, Vertex category) {
+		category.edges(Direction.OUT, "TEST").forEachRemaining(e -> {
 			double rnd = Math.random();
 			if (rnd > 0.98) {
-				Vertex inV = edge.getVertex(IN);
+				Vertex inV = e.inVertex();
 				category.addEdge("TEST2", inV);
 				System.out.println("Adding edge");
 			}
-		}
+		});
 	}
 
-	public void updateAllProducts(OrientBaseGraph tx) {
+	public void updateAllProducts(OrientGraph tx) {
 		for (Vertex v : tx.getVertices("@class", PRODUCT)) {
-			v.setProperty("name", System.currentTimeMillis());
+			v.property("name", System.currentTimeMillis());
 		}
 	}
 
-	public void addProduct(OrientBaseGraph tx, OrientVertex category) {
+	public void addProduct(OrientGraph tx, Vertex category) {
 		Vertex v = tx.addVertex("class:" + PRODUCT);
-		v.setProperty("name", "SOME VALUE");
+		v.property("name", "SOME VALUE");
 		category.addEdge("TEST", v);
 	}
 

@@ -10,15 +10,16 @@ import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
+import org.apache.tinkerpop.gremlin.orientdb.OrientGraphFactory;
 
+import com.orientechnologies.orient.core.metadata.OMetadata;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
-import com.tinkerpop.blueprints.impls.orient.OrientGraph;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
-import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
-import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 public class Database {
 
@@ -77,19 +78,28 @@ public class Database {
 
 		System.out.println("Adding vertex type for class {" + typeName + "}");
 
-		OrientGraphNoTx noTx = factory.getNoTx();
+		OrientGraph noTx = factory.getNoTx();
 		try {
-			OrientVertexType vertexType = noTx.getVertexType(typeName);
-			if (vertexType == null) {
-				String superClazz = "V";
-				if (superTypeName != null) {
-					superClazz = superTypeName;
-				}
-				vertexType = noTx.createVertexType(typeName, superClazz);
+			OSchema schema = getSchema(noTx);
+			if (superTypeName == null) {
+				superTypeName = "V";
 			}
+			OClass internalClass = schema.getOrCreateClass(typeName, schema.getOrCreateClass(superTypeName));
 		} finally {
-			noTx.shutdown();
+			noTx.close();
 		}
+	}
+
+	/**
+	 * Return the schema of the database.
+	 * 
+	 * @param noTx
+	 * @return
+	 */
+	private OSchema getSchema(OrientGraph noTx) {
+		OMetadata meta = noTx.getRawDatabase().getMetadata();
+		OSchema schema = meta.getSchema();
+		return schema;
 	}
 
 	private void postStartupDBEventHandling() {
@@ -109,7 +119,7 @@ public class Database {
 		factory = new OrientGraphFactory("plocal:" + new File(basePath + "/storage").getAbsolutePath());
 	}
 
-	public OrientGraphNoTx getNoTx() {
+	public OrientGraph getNoTx() {
 		return factory.getNoTx();
 	}
 
