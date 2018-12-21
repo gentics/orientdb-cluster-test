@@ -3,14 +3,13 @@ package de.jotschi.orientdb.test;
 import java.io.File;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
-
 
 public class OrientDBClusterTest extends AbstractClusterTest {
 
@@ -26,16 +25,12 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 
 	@Test
 	public void testCluster() throws Exception {
-		// 1. Setup the plocal database
-		db.setupPool();
-
-		// 2. Add a test types to the database
-		db.addVertexType(PRODUCT, null);
-		db.addVertexType(CATEGORY, null);
+		// 1. Setup DB once so that the OServer can later use it.
+		setupLocalDB();
 
 		// 3. Now start the OServer and provide the database to other nodes
-		startVertx();
 		db.startOrientServer();
+		startVertx();
 
 		// Create category
 		Object categoryId = tx(tx -> {
@@ -54,9 +49,9 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		long timer = vertx.setPeriodic(500, ph -> {
 			try {
 				tx(tx -> {
-					OrientVertex category = tx.getVertex(categoryId);
+					Vertex category = tx.vertices(categoryId).next();
 					category.property("test", System.currentTimeMillis());
-					System.out.println("Count: " + tx.countVertices());
+					System.out.println("Count: " + IteratorUtils.count(tx.vertices()));
 				});
 			} catch (OConcurrentCreateException e) {
 				System.out.println("Ignoring OConcurrentCreateException - normally we would retry the action.");
@@ -68,6 +63,18 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		sleep(5000);
 		db.getServer().shutdown();
 
+	}
+
+	private void setupLocalDB() {
+		// Setup the plocal database
+		db.setupPool();
+
+		// Add a test types to the database
+		db.addVertexType(PRODUCT, null);
+		db.addVertexType(CATEGORY, null);
+
+		// Finally close the plocal db
+		db.closePool();
 	}
 
 }

@@ -9,8 +9,11 @@ import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.structure.Direction;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
 
+import com.hazelcast.core.HazelcastInstance;
+
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import io.vertx.spi.cluster.hazelcast.HazelcastClusterManager;
 
 public class AbstractClusterTest {
 
@@ -27,11 +30,15 @@ public class AbstractClusterTest {
 	}
 
 	public void startVertx() throws InterruptedException {
-		VertxOptions options = new VertxOptions();
-		options.setClustered(true);
+		VertxOptions vertxOptions = new VertxOptions();
+		vertxOptions.setClustered(true);
 		CountDownLatch latch = new CountDownLatch(1);
-		Vertx.clusteredVertx(options, rh -> {
-			System.out.println("Vertx Joined Cluster");
+		HazelcastInstance hazelcast = (HazelcastInstance) db.getHazelcast();
+		HazelcastClusterManager manager = new HazelcastClusterManager(hazelcast);
+		vertxOptions.setClusterManager(manager);
+
+		Vertx.clusteredVertx(vertxOptions, rh -> {
+			System.out.println("Vert.x Joined Cluster");
 			vertx = rh.result();
 			latch.countDown();
 		});
@@ -74,7 +81,7 @@ public class AbstractClusterTest {
 	}
 
 	public void updateAllProducts(OrientGraph tx) {
-		for (Vertex v : tx.getVertices("@class", PRODUCT)) {
+		for (Vertex v : tx.traversal().V().has("@class", PRODUCT).toSet()) {
 			v.property("name", System.currentTimeMillis());
 		}
 	}

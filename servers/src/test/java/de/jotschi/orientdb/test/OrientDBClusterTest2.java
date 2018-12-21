@@ -1,10 +1,10 @@
 package de.jotschi.orientdb.test;
 
 import java.io.File;
-import java.util.Iterator;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.tinkerpop.gremlin.structure.Vertex;
+import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -26,32 +26,25 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 	@Test
 	public void testCluster() throws Exception {
 		// 1. Start the orient server - it will connect to other nodes and replicate the found database
-		startVertx();
 		db.startOrientServer();
+		startVertx();
 
 		// 2. Replication may occur directly or we need to wait.
 		db.waitForDB();
 
-		// 3. The db has now been replicated. Lets open the db
-		db.setupPool();
-
-		// Lookup category
+		// 3. Lookup category
 		Object categoryId = tx(tx -> {
-			Iterator<Vertex> vi = tx.vertices();
-			Vertex v = vi.next();
-			System.out.println("Clazz:"  + v.property("@class"));
-			
-			//.getVertices("@class", CATEGORY).iterator().next().getId();
-			return null;
+			Vertex v = tx.traversal().V().has("@class", CATEGORY).next();
+			return v.id();
 		});
 
-		// 4. Insert some vertices
+		// 4. Modify the graph
 		long timer = vertx.setPeriodic(500, ph -> {
 			try {
 				tx(tx -> {
 					Vertex category = tx.vertices(categoryId).next();
 					updateRandomEdge(tx, category);
-					//System.out.println("Count: " + tx.countVertices());
+					System.out.println("Count: " + IteratorUtils.count(tx.vertices()));
 				});
 			} catch (OConcurrentCreateException e) {
 				System.out.println("Ignoring OConcurrentCreateException - normally we would retry the action.");

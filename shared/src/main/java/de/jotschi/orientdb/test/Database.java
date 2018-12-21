@@ -13,13 +13,15 @@ import org.apache.commons.lang3.StringEscapeUtils;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraphFactory;
 
+import com.hazelcast.core.HazelcastInstance;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.metadata.OMetadata;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
-import com.orientechnologies.orient.server.plugin.OServerPluginManager;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 
 public class Database {
 
@@ -28,6 +30,7 @@ public class Database {
 	private OServer server;
 	private LatchingDistributedLifecycleListener listener;
 	private OrientGraphFactory factory;
+	private OHazelcastPlugin hazelcastPlugin;
 
 	public Database(String nodeName, String basePath) {
 		this.nodeName = nodeName;
@@ -40,54 +43,90 @@ public class Database {
 	}
 
 	private InputStream getOrientServerConfig() throws IOException {
-		InputStream configIns = getClass().getResourceAsStream("/config/orientdb-server-config.xml");
-		StringWriter writer = new StringWriter();
-		IOUtils.copy(configIns, writer, StandardCharsets.UTF_8);
-		String configString = writer.toString();
-		configString = configString.replaceAll("%PLUGIN_DIRECTORY%", "orient-plugins");
-		configString = configString.replaceAll("%CONSOLE_LOG_LEVEL%", "finest");
-		configString = configString.replaceAll("%FILE_LOG_LEVEL%", "fine");
-		configString = configString.replaceAll("%DB_PATH%", "plocal:" + escapePath(basePath + "/storage"));
-		configString = configString.replaceAll("%NODENAME%", nodeName);
-		configString = configString.replaceAll("%DB_PARENT_PATH%", escapePath(basePath));
-		InputStream stream = new ByteArrayInputStream(configString.getBytes(StandardCharsets.UTF_8));
-		return stream;
+		try (InputStream configIns = getClass().getResourceAsStream("/config/orientdb-server-config.xml")) {
+			StringWriter writer = new StringWriter();
+			IOUtils.copy(configIns, writer, StandardCharsets.UTF_8);
+			String configString = writer.toString();
+			// configString = configString.replaceAll("%CONFDIR_NAME%","config");
+			configString = configString.replaceAll("%PLUGIN_DIRECTORY%", "plugins");
+			configString = configString.replaceAll("%CONSOLE_LOG_LEVEL%", "finest");
+			configString = configString.replaceAll("%FILE_LOG_LEVEL%", "fine");
+			configString = configString.replaceAll("%DB_PATH%", "plocal:" + escapePath(basePath + "/storage"));
+			configString = configString.replaceAll("%NODENAME%", nodeName);
+			configString = configString.replaceAll("%DB_PARENT_PATH%", escapePath(basePath));
+			InputStream stream = new ByteArrayInputStream(configString.getBytes(StandardCharsets.UTF_8));
+			return stream;
+		}
 	}
 
 	private String escapePath(String path) {
 		return StringEscapeUtils.escapeJava(StringEscapeUtils.escapeXml11(new File(path).getAbsolutePath()));
 	}
 
+	public HazelcastInstance getHazelcast() {
+		return hazelcastPlugin != null ? hazelcastPlugin.getHazelcastInstance() : null;
+	}
+
 	public OServer startOrientServer() throws Exception {
 		String orientdbHome = new File("").getAbsolutePath();
+
 		System.setProperty("ORIENTDB_HOME", orientdbHome);
+		System.setProperty("CONF_DIR_NAME", "config");
+
 		if (server == null) {
-			this.server = OServerMain.create();
+			try (InputStream ins = getOrientServerConfig()) {
+				this.server = OServer.startFromStreamConfig(ins);
+			}
 		}
-		server.startup(getOrientServerConfig());
-		OServerPluginManager manager = new OServerPluginManager();
-		manager.config(server);
-		server.activate();
-		server.getDistributedManager().registerLifecycleListener(listener);
-		manager.startup();
+
+		//server.startup(getOrientServerConfig());
+		//server.activate();
+		ODistributedServerManager distributedManager = server.getDistributedManager();
+		distributedManager.registerLifecycleListener(listener);
+
+		if (server.getDistributedManager() instanceof OHazelcastPlugin) {
+			hazelcastPlugin = (OHazelcastPlugin) distributedManager;
+		}
+
 		postStartupDBEventHandling();
+
+		OrientDB context = server.getContext();
+
+		// Open the db locally
+		factory = new OrientGraphFactory(context, "storage", ODatabaseType.PLOCAL, "admin", "admin");
 		return server;
 	}
 
 	public void addVertexType(String typeName, String superTypeName) {
-
 		System.out.println("Adding vertex type for class {" + typeName + "}");
-
 		OrientGraph noTx = factory.getNoTx();
 		try {
 			OSchema schema = getSchema(noTx);
 			if (superTypeName == null) {
 				superTypeName = "V";
 			}
-			OClass internalClass = schema.getOrCreateClass(typeName, schema.getOrCreateClass(superTypeName));
+			schema.getOrCreateClass(typeName, schema.getOrCreateClass(superTypeName));
 		} finally {
 			noTx.close();
 		}
+	}
+
+	public void waitForDB() throws InterruptedException {
+		System.out.println("Waiting for database");
+		listener.waitForMainGraphDB(200, TimeUnit.SECONDS);
+		System.out.println("Found database");
+	}
+
+	public void setupPool() {
+		factory = new OrientGraphFactory("plocal:" + new File(basePath + "/storage").getAbsolutePath());
+	}
+
+	public OrientGraph getNoTx() {
+		return factory.getNoTx();
+	}
+
+	public OrientGraph getTx() {
+		return factory.getTx();
 	}
 
 	/**
@@ -109,22 +148,9 @@ public class Database {
 		listener.onDatabaseChangeStatus(nodeName, "storage", status);
 	}
 
-	public void waitForDB() throws InterruptedException {
-		System.out.println("Waiting for database");
-		listener.waitForMainGraphDB(200, TimeUnit.SECONDS);
-		System.out.println("Found database");
-	}
-
-	public void setupPool() {
-		factory = new OrientGraphFactory("plocal:" + new File(basePath + "/storage").getAbsolutePath());
-	}
-
-	public OrientGraph getNoTx() {
-		return factory.getNoTx();
-	}
-
-	public OrientGraph getTx() {
-		return factory.getTx();
+	public void closePool() {
+		factory.close();
+		factory = null;
 	}
 
 }
