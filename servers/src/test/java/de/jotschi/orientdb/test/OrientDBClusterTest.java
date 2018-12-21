@@ -8,7 +8,6 @@ import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 
 public class OrientDBClusterTest extends AbstractClusterTest {
@@ -19,16 +18,15 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 	@Before
 	public void cleanup() throws Exception {
 		FileUtils.deleteDirectory(new File("target/data1"));
-		OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(1);
 		initDB(nodeName, basePath);
 	}
 
 	@Test
 	public void testCluster() throws Exception {
-		// 1. Setup DB once so that the OServer can later use it.
+		// Setup DB once so that the OServer can later use it.
 		setupLocalDB();
 
-		// 3. Now start the OServer and provide the database to other nodes
+		// Now start the OServer and provide the database to other nodes
 		db.startOrientServer();
 		startVertx();
 
