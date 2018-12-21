@@ -87,7 +87,7 @@ public class AbstractClusterTest {
 	}
 
 	public void addProduct(OrientGraph tx, Vertex category) {
-		Vertex v = tx.addVertex("class:" + PRODUCT);
+		Vertex v = tx.addVertex(PRODUCT);
 		v.property("name", "SOME VALUE");
 		category.addEdge("TEST", v);
 	}

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ODB_HOME=~/Downloads/odb/orientdb-community-2.2.37
+ODB_HOME=~/Downloads/odb/orientdb-community-3.0.11
 
 rm log* 
 $ODB_HOME/bin/console.sh "connect plocal:target/data1/graphdb/storage admin admin; check database"  > log1

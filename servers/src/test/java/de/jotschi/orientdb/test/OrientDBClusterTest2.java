@@ -34,7 +34,7 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 
 		// 3. Lookup category
 		Object categoryId = tx(tx -> {
-			Vertex v = tx.traversal().V().has("@class", CATEGORY).next();
+			Vertex v = tx.traversal().V().hasLabel(CATEGORY).next();
 			return v.id();
 		});
 

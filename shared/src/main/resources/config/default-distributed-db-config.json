@@ -1,8 +1,9 @@
 {
   "autoDeploy": true,
   "readQuorum": 1,
-  "writeQuorum": "majority",
-  "executionMode": "undefined",
+  "writeQuorum": "1",
+  "executionMode": "synchronous",
+  "failureAvailableNodesLessQuorum": false,
   "readYourWrites": true,
   "newNodeStrategy": "static",
   "servers": {

@@ -34,7 +34,7 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 
 		// Create category
 		Object categoryId = tx(tx -> {
-			return tx.addVertex("class:" + CATEGORY).id();
+			return tx.addVertex(CATEGORY).id();
 		});
 
 		tx(tx -> {
