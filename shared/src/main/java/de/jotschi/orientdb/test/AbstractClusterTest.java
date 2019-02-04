@@ -2,6 +2,9 @@ package de.jotschi.orientdb.test;
 
 import static com.tinkerpop.blueprints.Direction.IN;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Random;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -19,6 +22,8 @@ import io.vertx.core.VertxOptions;
 
 public class AbstractClusterTest {
 
+	private static final long PRODUCT_COUNT = 1L;
+
 	public static final String CATEGORY = "Category";
 
 	public static final String PRODUCT = "Product";
@@ -26,6 +31,12 @@ public class AbstractClusterTest {
 	protected Database db;
 
 	protected Vertx vertx;
+
+	private final Random randr = new Random();
+
+	public final List<Object> productIds = new ArrayList<>();
+
+	public Object categoryId;
 
 	public void initDB(String name, String graphDbBasePath) throws Exception {
 		db = new Database(name, graphDbBasePath);
@@ -84,10 +95,11 @@ public class AbstractClusterTest {
 		}
 	}
 
-	public void addProduct(OrientBaseGraph tx, OrientVertex category) {
+	public Object addProduct(OrientBaseGraph tx, OrientVertex category) {
 		Vertex v = tx.addVertex("class:" + PRODUCT);
 		v.setProperty("name", "SOME VALUE");
 		category.addEdge("TEST", v);
+		return v.getId();
 	}
 
 	public void sleep(long time) {
@@ -97,4 +109,47 @@ public class AbstractClusterTest {
 			e.printStackTrace();
 		}
 	}
+
+	public void loadProductIds() {
+		tx(tx -> {
+			OrientVertex category = tx.getVertex(categoryId);
+			category.getVertices(Direction.OUT, "TEST").forEach(v -> {
+				productIds.add(v.getId());
+			});
+			return null;
+		});
+	}
+
+	public void createCategory() {
+		categoryId = tx(tx -> {
+			return tx.addVertex("class:" + CATEGORY).getId();
+		});
+		System.out.println("Created category " + categoryId);
+	}
+
+	public void loadCategoryId() {
+		categoryId = tx(tx -> {
+			return tx.getVertices("@class", CATEGORY).iterator().next().getId();
+		});
+	}
+
+	public void insertProducts() {
+		tx(tx -> {
+			for (int i = 0; i < PRODUCT_COUNT; i++) {
+				OrientVertex category = getCategory(tx);
+				productIds.add(addProduct(tx, category));
+			}
+			return null;
+		});
+		System.out.println("Inserted " + PRODUCT_COUNT + " products");
+	}
+
+	public OrientVertex getCategory(OrientBaseGraph tx) {
+		return tx.getVertex(categoryId);
+	}
+
+	public OrientVertex getRandomProduct(OrientBaseGraph tx) {
+		return tx.getVertex(productIds.get(randr.nextInt(productIds.size())));
+	}
+
 }

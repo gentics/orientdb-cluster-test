@@ -6,66 +6,68 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OrientDBClusterTest extends AbstractClusterTest {
 
-	private final String nodeName = "nodeA";
-	private final String basePath = "target/data1/graphdb";
+	private final String NODE_NAME = "nodeA";
 
 	@Before
 	public void cleanup() throws Exception {
 		FileUtils.deleteDirectory(new File("target/data1"));
 		OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(1);
-		initDB(nodeName, basePath);
+		initDB(NODE_NAME, "target/data1");
 	}
 
 	@Test
 	public void testCluster() throws Exception {
-		// 1. Setup the plocal database
-		db.setupPool();
-
-		// 2. Add a test types to the database
-		db.addVertexType(PRODUCT, null);
-		db.addVertexType(CATEGORY, null);
-
-		// 3. Now start the OServer and provide the database to other nodes
+		// Now start the OServer and provide the database to other nodes
 		startVertx();
 		db.startOrientServer();
+		db.create("storage");
 
-		// Create category
-		Object categoryId = tx(tx -> {
-			return tx.addVertex("class:" + CATEGORY).getId();
-		});
+		// Setup needed types
+		db.addVertexType(() -> db.getNoTx(), PRODUCT, null);
+		db.addVertexType(() -> db.getNoTx(), CATEGORY, null);
 
-		tx(tx -> {
-			for (int i = 0; i < 1000; i++) {
-				OrientVertex category = tx.getVertex(categoryId);
-				addProduct(tx, category);
-			}
-			return null;
-		});
+		// Insert the needed vertices
+		createCategory();
+		insertProducts();
 
-		// Now continue to insert some nodes in the database
-		long timer = vertx.setPeriodic(500, ph -> {
-			try {
-				tx(tx -> {
-					OrientVertex category = tx.getVertex(categoryId);
-					category.setProperty("test", System.currentTimeMillis());
-					System.out.println("Count: " + tx.countVertices());
-				});
-			} catch (OConcurrentCreateException e) {
-				System.out.println("Ignoring OConcurrentCreateException - normally we would retry the action.");
-			}
-		});
+		// Now continue to update the products concurrently
+		long timer1 = vertx.setPeriodic(50, this::productUpdater);
+		long timer2 = vertx.setPeriodic(50, this::productUpdater);
 
 		System.in.read();
-		vertx.cancelTimer(timer);
+		System.out.println("Stopping timers.");
+		vertx.cancelTimer(timer1);
+		vertx.cancelTimer(timer2);
+		Thread.sleep(1000);
+		System.out.println("Timer stopped.");
+		System.out.println(
+			"Press any key to update product one more time. This time no lock error should occure since the other TX's have been terminated.");
+
+		System.in.read();
+		productUpdater(null);
+
+		System.in.read();
 		sleep(5000);
 		db.getServer().shutdown();
 
+	}
+
+	public void productUpdater(Long v) {
+		try {
+			tx(tx -> {
+				OrientVertex product = getRandomProduct(tx);
+				System.out.println("Update " + product.getId());
+				product.setProperty("test", NODE_NAME + "@" + System.currentTimeMillis());
+			});
+		} catch (ONeedRetryException e) {
+			System.out.println("Ignoring ONeedRetryException - normally we would retry the action.");
+		}
 	}
 
 }

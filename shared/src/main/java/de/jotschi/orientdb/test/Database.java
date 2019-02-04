@@ -1,16 +1,22 @@
 package de.jotschi.orientdb.test;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
@@ -26,7 +32,6 @@ public class Database {
 	private String basePath;
 	private OServer server;
 	private LatchingDistributedLifecycleListener listener;
-	private OrientGraphFactory factory;
 
 	public Database(String nodeName, String basePath) {
 		this.nodeName = nodeName;
@@ -38,19 +43,19 @@ public class Database {
 		return server;
 	}
 
-	private InputStream getOrientServerConfig() throws IOException {
+	private String getOrientServerConfig() throws IOException {
 		InputStream configIns = getClass().getResourceAsStream("/config/orientdb-server-config.xml");
 		StringWriter writer = new StringWriter();
 		IOUtils.copy(configIns, writer, StandardCharsets.UTF_8);
 		String configString = writer.toString();
-		configString = configString.replaceAll("%PLUGIN_DIRECTORY%", "orient-plugins");
-		configString = configString.replaceAll("%CONSOLE_LOG_LEVEL%", "finest");
-		configString = configString.replaceAll("%FILE_LOG_LEVEL%", "fine");
-		configString = configString.replaceAll("%DB_PATH%", "plocal:" + escapePath(basePath + "/storage"));
-		configString = configString.replaceAll("%NODENAME%", nodeName);
-		configString = configString.replaceAll("%DB_PARENT_PATH%", escapePath(basePath));
-		InputStream stream = new ByteArrayInputStream(configString.getBytes(StandardCharsets.UTF_8));
-		return stream;
+		System.setProperty("ORIENTDB_PLUGIN_DIR", "orient-plugins");
+		System.setProperty("plugin.directory", "orient-plugins");
+		System.setProperty("ORIENTDB_CONFDIR_NAME", "config");
+		System.setProperty("ORIENTDB_NODE_NAME", nodeName);
+		System.setProperty("ORIENTDB_DISTRIBUTED", "true");
+		System.setProperty("ORIENTDB_DB_PATH", escapePath(basePath));
+		configString = PropertyUtil.resolve(configString);
+		return configString;
 	}
 
 	private String escapePath(String path) {
@@ -58,6 +63,9 @@ public class Database {
 	}
 
 	public OServer startOrientServer() throws Exception {
+
+		OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
+
 		String orientdbHome = new File("").getAbsolutePath();
 		System.setProperty("ORIENTDB_HOME", orientdbHome);
 		if (server == null) {
@@ -73,11 +81,11 @@ public class Database {
 		return server;
 	}
 
-	public void addVertexType(String typeName, String superTypeName) {
+	public void addVertexType(Supplier<OrientGraphNoTx> txProvider, String typeName, String superTypeName) {
 
 		System.out.println("Adding vertex type for class {" + typeName + "}");
 
-		OrientGraphNoTx noTx = factory.getNoTx();
+		OrientGraphNoTx noTx = txProvider.get();
 		try {
 			OrientVertexType vertexType = noTx.getVertexType(typeName);
 			if (vertexType == null) {
@@ -105,16 +113,27 @@ public class Database {
 		System.out.println("Found database");
 	}
 
-	public void setupPool() {
-		factory = new OrientGraphFactory("plocal:" + new File(basePath + "/storage").getAbsolutePath());
+	public OrientGraph getTx() {
+		ODatabaseSession db = server.getContext().open("storage", "admin", "admin");
+		return (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph((ODatabaseDocumentInternal) db);
 	}
 
 	public OrientGraphNoTx getNoTx() {
-		return factory.getNoTx();
+		ODatabaseSession db = server.getContext().open("storage", "admin", "admin");
+		return (OrientGraphNoTx) OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentInternal) db);
 	}
 
-	public OrientGraph getTx() {
-		return factory.getTx();
+	public void runLocally(Consumer<OrientGraphFactory> action) {
+		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File(basePath + "/storage").getAbsolutePath());
+		try {
+			action.accept(factory);
+		} finally {
+			factory.close();
+		}
+	}
+
+	public void create(String name) {
+		server.createDatabase(name, ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
 	}
 
 }
