@@ -54,7 +54,7 @@ public class Database {
 		System.setProperty("PORT_CONFIG_HTTP",httpPort);
 		System.setProperty("PORT_CONFIG_BIN", binPort);
 		System.setProperty("ORIENTDB_PLUGIN_DIR", "orient-plugins");
-		System.setProperty("plugin.directory", "orient-plugins");
+		System.setProperty("plugin.directory", "plugins");
 		System.setProperty("ORIENTDB_CONFDIR_NAME", "config");
 		System.setProperty("ORIENTDB_NODE_NAME", nodeName);
 		System.setProperty("ORIENTDB_DISTRIBUTED", "true");
