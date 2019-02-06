@@ -12,7 +12,6 @@ import java.util.function.Supplier;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -31,11 +30,15 @@ public class Database {
 	private String nodeName;
 	private String basePath;
 	private OServer server;
+	private String httpPort;
+	private String binPort;
 	private LatchingDistributedLifecycleListener listener;
 
-	public Database(String nodeName, String basePath) {
+	public Database(String nodeName, String basePath, String httpPort, String binPort) {
 		this.nodeName = nodeName;
 		this.basePath = basePath;
+		this.httpPort = httpPort;
+		this.binPort = binPort;
 		this.listener = new LatchingDistributedLifecycleListener(nodeName);
 	}
 
@@ -48,6 +51,8 @@ public class Database {
 		StringWriter writer = new StringWriter();
 		IOUtils.copy(configIns, writer, StandardCharsets.UTF_8);
 		String configString = writer.toString();
+		System.setProperty("PORT_CONFIG_HTTP",httpPort);
+		System.setProperty("PORT_CONFIG_BIN", binPort);
 		System.setProperty("ORIENTDB_PLUGIN_DIR", "orient-plugins");
 		System.setProperty("plugin.directory", "orient-plugins");
 		System.setProperty("ORIENTDB_CONFDIR_NAME", "config");
@@ -64,7 +69,6 @@ public class Database {
 
 	public OServer startOrientServer() throws Exception {
 
-		OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
 
 		String orientdbHome = new File("").getAbsolutePath();
 		System.setProperty("ORIENTDB_HOME", orientdbHome);

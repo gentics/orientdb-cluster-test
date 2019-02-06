@@ -38,8 +38,8 @@
 			<protocol name="http" implementation="com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb" />
 		</protocols>
 		<listeners>
-			<listener protocol="binary" ip-address="${ORIENTDB_NETWORK_HOST}" port-range="2424-2430" socket="default" />
-			<listener protocol="http" ip-address="${ORIENTDB_NETWORK_HOST}" port-range="2480-2490" socket="default">
+			<listener protocol="binary" ip-address="${ORIENTDB_NETWORK_HOST}" port-range="${PORT_CONFIG_BIN}" socket="default" />
+			<listener protocol="http" ip-address="${ORIENTDB_NETWORK_HOST}" port-range="${PORT_CONFIG_HTTP}" socket="default">
 				<parameters>
 					<!-- Connection's custom parameters. If not specified the global configuration will be taken -->
 					<parameter name="network.http.charset" value="utf-8" />

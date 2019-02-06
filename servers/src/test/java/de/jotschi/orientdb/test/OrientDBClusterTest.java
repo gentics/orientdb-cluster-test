@@ -7,7 +7,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class OrientDBClusterTest extends AbstractClusterTest {
@@ -17,8 +16,7 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 	@Before
 	public void cleanup() throws Exception {
 		FileUtils.deleteDirectory(new File("target/data1"));
-		OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(1);
-		initDB(NODE_NAME, "target/data1");
+		initDB(NODE_NAME, "target/data1", "2480-2480", "2424-2424");
 	}
 
 	@Test
@@ -36,14 +34,17 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		createCategory();
 		insertProducts();
 
+		System.out.println("Press any key to start load");
+		System.in.read();
+
 		// Now continue to update the products concurrently
 		long timer1 = vertx.setPeriodic(50, this::productUpdater);
-		long timer2 = vertx.setPeriodic(50, this::productUpdater);
+		// long timer2 = vertx.setPeriodic(50, this::productUpdater);
 
 		System.in.read();
 		System.out.println("Stopping timers.");
 		vertx.cancelTimer(timer1);
-		vertx.cancelTimer(timer2);
+		// vertx.cancelTimer(timer2);
 		Thread.sleep(1000);
 		System.out.println("Timer stopped.");
 		System.out.println(

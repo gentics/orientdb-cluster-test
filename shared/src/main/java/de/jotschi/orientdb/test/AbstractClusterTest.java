@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
@@ -38,16 +39,21 @@ public class AbstractClusterTest {
 
 	public Object categoryId;
 
-	public void initDB(String name, String graphDbBasePath) throws Exception {
-		db = new Database(name, graphDbBasePath);
+	static {
+		OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
+	}
+
+	public void initDB(String name, String graphDbBasePath, String httpPort, String binPort) throws Exception {
+		db = new Database(name, graphDbBasePath, httpPort, binPort);
 	}
 
 	public void startVertx() throws InterruptedException {
 		VertxOptions options = new VertxOptions();
 		options.setClustered(true);
+		options.setBlockedThreadCheckInterval(Integer.MAX_VALUE);
 		CountDownLatch latch = new CountDownLatch(1);
 		Vertx.clusteredVertx(options, rh -> {
-			System.out.println("Vertx Joined Cluster");
+			System.out.println("Vert.x Joined Cluster");
 			vertx = rh.result();
 			latch.countDown();
 		});

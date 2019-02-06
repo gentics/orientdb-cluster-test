@@ -6,14 +6,14 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 
-public class OrientDBClusterTest2 extends AbstractClusterTest {
+public class OrientDBClusterTest3 extends AbstractClusterTest {
 
-	private final String NODE_NAME = "nodeB";
+	private final String NODE_NAME = "nodeC";
 
 	@Before
 	public void setup() throws Exception {
-		FileUtils.deleteDirectory(new File("target/data2"));
-		initDB(NODE_NAME, "target/data2", "2481-2481", "2425-2425");
+		FileUtils.deleteDirectory(new File("target/data3"));
+		initDB(NODE_NAME, "target/data3", "2482-2482", "2426-2426");
 	}
 
 	@Test
