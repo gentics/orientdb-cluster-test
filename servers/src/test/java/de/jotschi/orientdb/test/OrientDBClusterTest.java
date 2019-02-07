@@ -19,13 +19,13 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 	@Before
 	public void cleanup() throws Exception {
 		FileUtils.deleteDirectory(new File("target/data1"));
+		// OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
 		initDB(NODE_NAME, "target/data1", "2480-2480", "2424-2424");
 	}
 
 	@Test
 	public void testCluster() throws Exception {
 		// Now start the OServer and provide the database to other nodes
-		//startVertx();
 		db.startOrientServer();
 		db.create("storage");
 
@@ -38,19 +38,17 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		insertProducts();
 
 		// Now continue to update the products concurrently
-		ScheduledExecutorService executorServiceA = Executors
-			.newSingleThreadScheduledExecutor();
-		ScheduledExecutorService executorServiceB = Executors
-			.newSingleThreadScheduledExecutor();
+		ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 		System.out.println("Press any key to start load");
 		System.in.read();
-		executorServiceA.scheduleAtFixedRate(() -> productUpdater(), 100, 50, TimeUnit.MILLISECONDS);
+		executor.scheduleAtFixedRate(() -> productUpdater(), 100, 50, TimeUnit.MILLISECONDS);
 		System.in.read();
-		executorServiceB.scheduleAtFixedRate(() -> productUpdater(), 100, 50, TimeUnit.MILLISECONDS);
+		executor.scheduleAtFixedRate(() -> productUpdater(), 100, 50, TimeUnit.MILLISECONDS);
+		System.in.read();
+		executor.scheduleAtFixedRate(() -> productUpdater(), 100, 50, TimeUnit.MILLISECONDS);
 		System.in.read();
 		System.out.println("Stopping threads.");
-		executorServiceA.shutdown();
-		executorServiceB.shutdown();
+		executor.shutdown();
 		Thread.sleep(1000);
 		System.out.println("Timer stopped.");
 		System.out.println(
@@ -74,6 +72,7 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 				System.out.println("Update " + product.getId());
 				product.setProperty("test", NODE_NAME + "@" + System.currentTimeMillis());
 			});
+			System.out.println("Updated");
 		} catch (ONeedRetryException e) {
 			e.printStackTrace();
 			System.out.println("Ignoring ONeedRetryException - normally we would retry the action.");

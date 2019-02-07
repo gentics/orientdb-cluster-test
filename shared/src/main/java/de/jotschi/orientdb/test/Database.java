@@ -6,7 +6,6 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.apache.commons.io.IOUtils;
@@ -51,7 +50,7 @@ public class Database {
 		StringWriter writer = new StringWriter();
 		IOUtils.copy(configIns, writer, StandardCharsets.UTF_8);
 		String configString = writer.toString();
-		System.setProperty("PORT_CONFIG_HTTP",httpPort);
+		System.setProperty("PORT_CONFIG_HTTP", httpPort);
 		System.setProperty("PORT_CONFIG_BIN", binPort);
 		System.setProperty("ORIENTDB_PLUGIN_DIR", "orient-plugins");
 		System.setProperty("plugin.directory", "plugins");
@@ -68,7 +67,6 @@ public class Database {
 	}
 
 	public OServer startOrientServer() throws Exception {
-
 
 		String orientdbHome = new File("").getAbsolutePath();
 		System.setProperty("ORIENTDB_HOME", orientdbHome);
@@ -125,15 +123,6 @@ public class Database {
 	public OrientGraphNoTx getNoTx() {
 		ODatabaseSession db = server.getContext().open("storage", "admin", "admin");
 		return (OrientGraphNoTx) OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentInternal) db);
-	}
-
-	public void runLocally(Consumer<OrientGraphFactory> action) {
-		OrientGraphFactory factory = new OrientGraphFactory("plocal:" + new File(basePath + "/storage").getAbsolutePath());
-		try {
-			action.accept(factory);
-		} finally {
-			factory.close();
-		}
 	}
 
 	public void create(String name) {

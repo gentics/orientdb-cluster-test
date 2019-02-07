@@ -5,21 +5,15 @@ import static com.tinkerpop.blueprints.Direction.IN;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
-
-import io.vertx.core.Vertx;
-import io.vertx.core.VertxOptions;
 
 public class AbstractClusterTest {
 
@@ -31,33 +25,14 @@ public class AbstractClusterTest {
 
 	protected Database db;
 
-	protected Vertx vertx;
-
 	private final Random randr = new Random();
 
 	public final List<Object> productIds = new ArrayList<>();
 
 	public Object categoryId;
 
-	static {
-		OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
-	}
-
 	public void initDB(String name, String graphDbBasePath, String httpPort, String binPort) throws Exception {
 		db = new Database(name, graphDbBasePath, httpPort, binPort);
-	}
-
-	public void startVertx() throws InterruptedException {
-		VertxOptions options = new VertxOptions();
-		options.setClustered(true);
-		options.setBlockedThreadCheckInterval(Integer.MAX_VALUE);
-		CountDownLatch latch = new CountDownLatch(1);
-		Vertx.clusteredVertx(options, rh -> {
-			System.out.println("Vert.x Joined Cluster");
-			vertx = rh.result();
-			latch.countDown();
-		});
-		latch.await(10, TimeUnit.SECONDS);
 	}
 
 	public <T> T tx(Function<OrientBaseGraph, T> handler) {
