@@ -41,11 +41,11 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 		System.out.println("Press any key to start load");
 		System.in.read();
-		executor.scheduleAtFixedRate(() -> productUpdater(), 100, 50, TimeUnit.MILLISECONDS);
+		executor.scheduleAtFixedRate(() -> productUpdater(), 100, 20, TimeUnit.MILLISECONDS);
 		System.in.read();
-		executor.scheduleAtFixedRate(() -> productUpdater(), 100, 50, TimeUnit.MILLISECONDS);
+		executor.scheduleAtFixedRate(() -> productUpdater(), 100, 20, TimeUnit.MILLISECONDS);
 		System.in.read();
-		executor.scheduleAtFixedRate(() -> productUpdater(), 100, 50, TimeUnit.MILLISECONDS);
+		executor.scheduleAtFixedRate(() -> productUpdater(), 100, 20, TimeUnit.MILLISECONDS);
 		System.in.read();
 		System.out.println("Stopping threads.");
 		executor.shutdown();
