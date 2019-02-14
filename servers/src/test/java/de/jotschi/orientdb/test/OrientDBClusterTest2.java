@@ -24,9 +24,6 @@ public class OrientDBClusterTest2 extends AbstractClusterTest {
 		// Replication may occur directly or we need to wait.
 		db.waitForDB();
 
-		loadCategoryId();
-		loadProductIds();
-
 		// Don't execute anything against this node
 		System.in.read();
 		sleep(5000);

@@ -15,6 +15,9 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
@@ -96,6 +99,15 @@ public class Database {
 					superClazz = superTypeName;
 				}
 				vertexType = noTx.createVertexType(typeName, superClazz);
+
+				// Add index
+				String fieldKey = "name";
+				vertexType.createProperty(fieldKey, OType.STRING);
+				boolean unique = false;
+				String indexName = typeName + "_name";
+				vertexType.createIndex(indexName.toLowerCase(),
+					unique ? OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString() : OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString(),
+					null, new ODocument().fields("ignoreNullValues", true), new String[] { fieldKey });
 			}
 		} finally {
 			noTx.shutdown();
