@@ -8,9 +8,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.CyclicBarrier;
-import java.util.function.Function;
 
 public class OWaitPartitionsReadyTask extends OAbstractRemoteTask {
   private final    CyclicBarrier started;

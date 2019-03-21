@@ -34,7 +34,10 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 
 		// Setup needed types
 		db.addVertexType(() -> db.getNoTx(), PRODUCT, null);
+		db.addVertexType(() -> db.getNoTx(), PRODUCT_INFO, null);
 		db.addVertexType(() -> db.getNoTx(), CATEGORY, null);
+		db.addEdgeType(() -> db.getNoTx(), "HAS_PRODUCT", null);
+		db.addEdgeType(() -> db.getNoTx(), "HAS_INFO", null);
 
 		// Insert the needed vertices
 		createCategories();
@@ -43,6 +46,8 @@ public class OrientDBClusterTest extends AbstractClusterTest {
 		// Now continue to update the products concurrently
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 		System.out.println("Press any key to start load");
+		System.in.read();
+		executor.scheduleAtFixedRate(() -> productInserter(), 100, 20, TimeUnit.MILLISECONDS);
 		System.in.read();
 		executor.scheduleAtFixedRate(() -> productInserter(), 100, 20, TimeUnit.MILLISECONDS);
 		System.in.read();

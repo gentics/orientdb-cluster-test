@@ -22,6 +22,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
+import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphFactory;
 import com.tinkerpop.blueprints.impls.orient.OrientGraphNoTx;
@@ -84,6 +85,34 @@ public class Database {
 		manager.startup();
 		postStartupDBEventHandling();
 		return server;
+	}
+
+	public void addEdgeType(Supplier<OrientGraphNoTx> txProvider, String label, String superTypeName) {
+		System.out.println("Adding edge type for label {" + label + "}");
+
+		OrientGraphNoTx noTx = txProvider.get();
+		try {
+			OrientEdgeType edgeType = noTx.getEdgeType(label);
+			if (edgeType == null) {
+				String superClazz = "E";
+				if (superTypeName != null) {
+					superClazz = superTypeName;
+				}
+				edgeType = noTx.createEdgeType(label, superClazz);
+
+				// Add index
+				String fieldKey = "name";
+				edgeType.createProperty(fieldKey, OType.STRING);
+				boolean unique = false;
+				String indexName = label + "_name";
+				edgeType.createIndex(indexName.toLowerCase(),
+					unique ? OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString() : OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString(),
+					null, new ODocument().fields("ignoreNullValues", true), new String[] { fieldKey });
+			}
+		} finally {
+			noTx.shutdown();
+		}
+
 	}
 
 	public void addVertexType(Supplier<OrientGraphNoTx> txProvider, String typeName, String superTypeName) {

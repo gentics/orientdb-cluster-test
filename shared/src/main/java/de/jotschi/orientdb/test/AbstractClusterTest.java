@@ -1,7 +1,5 @@
 package de.jotschi.orientdb.test;
 
-import static com.tinkerpop.blueprints.Direction.IN;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -9,7 +7,6 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.tinkerpop.blueprints.Direction;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
@@ -21,6 +18,8 @@ public class AbstractClusterTest {
 	public static final String CATEGORY = "Category";
 
 	public static final String PRODUCT = "Product";
+
+	public static final String PRODUCT_INFO = "ProductInfo";
 
 	protected Database db;
 
@@ -59,25 +58,14 @@ public class AbstractClusterTest {
 		});
 	}
 
-	public void updateRandomEdge(OrientBaseGraph tx, OrientVertex category) {
-		for (Edge edge : category.getEdges(Direction.OUT, "TEST")) {
-			double rnd = Math.random();
-			if (rnd > 0.98) {
-				Vertex inV = edge.getVertex(IN);
-				category.addEdge("TEST2", inV);
-				System.out.println("Adding edge");
-			}
-		}
-	}
-
-	public void updateAllProducts(OrientBaseGraph tx) {
-		for (Vertex v : tx.getVertices("@class", PRODUCT)) {
-			v.setProperty("name", System.currentTimeMillis());
-		}
-	}
-
 	public Vertex createProduct(OrientBaseGraph tx) {
 		Vertex v = tx.addVertex("class:" + PRODUCT);
+		v.setProperty("name", "SOME VALUE" + System.currentTimeMillis());
+		return v;
+	}
+
+	public Vertex createProductInfo(OrientBaseGraph tx) {
+		Vertex v = tx.addVertex("class:" + PRODUCT_INFO);
 		v.setProperty("name", "SOME VALUE" + System.currentTimeMillis());
 		return v;
 	}
@@ -92,6 +80,9 @@ public class AbstractClusterTest {
 
 	public Vertex insertProduct(OrientBaseGraph tx) {
 		Vertex product = createProduct(tx);
+		Vertex info = createProductInfo(tx);
+		Edge edge = product.addEdge("HAS_INFO", info);
+		edge.setProperty("name", "Value" + System.currentTimeMillis());
 		// Add product to all categories
 		for (Vertex category : tx.getVertices("@class", CATEGORY)) {
 			category.addEdge("HAS_PRODUCT", product);

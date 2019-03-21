@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -108,14 +107,13 @@ public class ONewDistributedTransactionManager {
     final ODistributedConfiguration dbCfg = dManager.getDatabaseConfiguration(storage.getName());
 
     // CHECK THE LOCAL NODE IS THE OWNER OF THE CLUSTER IDS
-    checkForClusterIds(iTx);
+    //checkForClusterIds(iTx);
 
     final ODistributedRequestId requestId = new ODistributedRequestId(dManager.getLocalNodeId(),
         dManager.getNextMessageIdCounter());
 
     final Set<String> involvedClusters = getInvolvedClusters(iTx.getRecordOperations());
     Set<String> nodes = getAvailableNodesButLocal(dbCfg, involvedClusters, localNodeName);
-    final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(iTx, nodes) : null;
     OTransactionResultPayload localResult;
     int nretry = database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
     int delay = database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
@@ -135,6 +133,7 @@ public class ONewDistributedTransactionManager {
       count++;
     } while (localResult.getResponseType() == OTxLockTimeout.ID && count < nretry && retryCount == 0);
 
+    final OTransactionPhase1Task txTask = !nodes.isEmpty() ? createTxTask(iTx, nodes) : null;
     try {
       localDistributedDatabase.getSyncConfiguration()
           .setLastLSN(localNodeName, ((OLocalPaginatedStorage) storage.getUnderlying()).getLSN(), true);
