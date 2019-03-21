@@ -13,7 +13,7 @@
 	</modules>
 
 	<properties>
-		<orientdb.version>3.0.15</orientdb.version>
+		<orientdb.version>3.0.18-SNAPSHOT</orientdb.version>
 	</properties>
 
 	<dependencyManagement>

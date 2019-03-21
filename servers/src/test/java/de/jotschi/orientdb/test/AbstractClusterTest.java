@@ -1,11 +1,18 @@
 package de.jotschi.orientdb.test;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
+import org.apache.commons.io.FileUtils;
+
+import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
@@ -28,6 +35,14 @@ public class AbstractClusterTest {
 	public final List<Object> productIds = new ArrayList<>();
 
 	public List<Object> categoryIds = new ArrayList<>();
+
+	public String nodeName;
+
+	protected void setup(String name, String httpPort, String binPort) throws Exception {
+		this.nodeName = name;
+		FileUtils.deleteDirectory(new File("target/" + name));
+		initDB(name, "target/" + name, httpPort, binPort);
+	}
 
 	public void initDB(String name, String graphDbBasePath, String httpPort, String binPort) throws Exception {
 		OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
@@ -93,6 +108,48 @@ public class AbstractClusterTest {
 
 	public OrientVertex getRandomProduct(OrientBaseGraph tx) {
 		return tx.getVertex(productIds.get(randr.nextInt(productIds.size())));
+	}
+	
+	public void updateRandomProduct() {
+		
+	}
+
+	public void triggerLoad(Runnable command) throws Exception {
+		// Now continue to update the products concurrently
+		ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
+		System.out.println("Press any key to start load");
+		System.in.read();
+		executor.scheduleAtFixedRate(command, 100, 20, TimeUnit.MILLISECONDS);
+		System.in.read();
+		executor.scheduleAtFixedRate(command, 100, 20, TimeUnit.MILLISECONDS);
+		System.in.read();
+		executor.scheduleAtFixedRate(command, 100, 20, TimeUnit.MILLISECONDS);
+		System.in.read();
+		executor.scheduleAtFixedRate(command, 100, 20, TimeUnit.MILLISECONDS);
+		System.in.read();
+		System.out.println("Stopping threads.");
+		executor.shutdown();
+		Thread.sleep(1000);
+		System.out.println("Timer stopped.");
+		System.out.println(
+			"Press any key to update product one more time. This time no lock error should occure since the other TX's have been terminated.");
+
+		System.in.read();
+		productInserter();
+	}
+
+	public void productInserter() {
+		try {
+			tx(tx -> {
+				Vertex product = insertProduct(tx);
+				product.setProperty("name", nodeName + "@" + System.currentTimeMillis());
+				System.out.println("Insert " + product.getId());
+			});
+			System.out.println("Inserted");
+		} catch (ONeedRetryException e) {
+			e.printStackTrace();
+			System.out.println("Ignoring ONeedRetryException - normally we would retry the action.");
+		}
 	}
 
 }
