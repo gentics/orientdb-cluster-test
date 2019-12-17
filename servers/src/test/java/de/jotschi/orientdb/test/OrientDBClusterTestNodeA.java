@@ -35,11 +35,18 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 
 	private void setupDB() {
 		// Setup needed types
-		db.addVertexType(() -> db.getNoTx(), PRODUCT, null);
-		db.addVertexType(() -> db.getNoTx(), PRODUCT_INFO, null);
-		db.addVertexType(() -> db.getNoTx(), CATEGORY, null);
-		db.addEdgeType(() -> db.getNoTx(), "HAS_PRODUCT", null);
-		db.addEdgeType(() -> db.getNoTx(), "HAS_INFO", null);
+
+		// 1. Add base type with .uuid unique index
+		db.addVertexType(() -> db.getNoTx(), BASE, null, uuidTypeModifier());
+
+		// 2. Add extra types with .name index
+		db.addVertexType(() -> db.getNoTx(), PRODUCT, BASE, nameTypeModifier());
+		db.addVertexType(() -> db.getNoTx(), PRODUCT_INFO, BASE, nameTypeModifier());
+		db.addVertexType(() -> db.getNoTx(), CATEGORY, BASE, nameTypeModifier());
+
+		// 3. Don't use HAS_PRODUCT in this testcase. We don't use supernodes anymore.
+		// db.addEdgeType(() -> db.getNoTx(), HAS_PRODUCT, null);
+		db.addEdgeType(() -> db.getNoTx(), HAS_INFO, null);
 
 		// Insert the needed vertices
 		createCategories();
@@ -50,7 +57,7 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 	public void insertProducts() {
 		tx(tx -> {
 			for (int i = 0; i < PRODUCT_COUNT; i++) {
-				insertProduct(tx);
+				insertProduct(tx, randomUUID(), randomUUID());
 			}
 			return null;
 		});

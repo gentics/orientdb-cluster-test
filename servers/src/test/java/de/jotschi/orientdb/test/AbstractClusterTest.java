@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
+import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -14,17 +15,28 @@ import org.apache.commons.io.FileUtils;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.tinkerpop.blueprints.Edge;
 import com.tinkerpop.blueprints.Vertex;
 import com.tinkerpop.blueprints.impls.orient.OrientBaseGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertex;
+import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 public class AbstractClusterTest {
 
 	static {
+		// Disable direct IO (My dev system uses ZFS. Otherwise the test will not run)
 		System.setProperty("storage.wal.allowDirectIO", "false");
 	}
+
+	public static final String HAS_PRODUCT = "HAS_PRODUCT";
+
+	public static final String HAS_INFO = "HAS_INFO";
+
+	public static final String BASE = "Base";
 
 	public static final String CATEGORY = "Category";
 
@@ -77,14 +89,16 @@ public class AbstractClusterTest {
 		});
 	}
 
-	public Vertex createProduct(OrientBaseGraph tx) {
+	public Vertex createProduct(OrientBaseGraph tx, String uuid) {
 		Vertex v = tx.addVertex("class:" + PRODUCT);
+		v.setProperty("uuid", uuid);
 		v.setProperty("name", "SOME VALUE" + System.currentTimeMillis());
 		return v;
 	}
 
-	public Vertex createProductInfo(OrientBaseGraph tx) {
+	public Vertex createProductInfo(OrientBaseGraph tx, String uuid) {
 		Vertex v = tx.addVertex("class:" + PRODUCT_INFO);
+		v.setProperty("uuid", uuid);
 		v.setProperty("name", "SOME VALUE" + System.currentTimeMillis());
 		return v;
 	}
@@ -97,25 +111,21 @@ public class AbstractClusterTest {
 		}
 	}
 
-	public Vertex insertProduct(OrientBaseGraph tx) {
-		Vertex product = createProduct(tx);
-		Vertex info = createProductInfo(tx);
-		Edge edge = product.addEdge("HAS_INFO", info);
+	public Vertex insertProduct(OrientBaseGraph tx, String productUuid, String infoUuid) {
+		Vertex product = createProduct(tx, productUuid);
+		Vertex info = createProductInfo(tx, infoUuid);
+		Edge edge = product.addEdge(HAS_INFO, info);
 		edge.setProperty("name", "Value" + System.currentTimeMillis());
 		// Add product to all categories
-		for (Vertex category : tx.getVertices("@class", CATEGORY)) {
-			category.addEdge("HAS_PRODUCT", product);
-		}
+		// for (Vertex category : tx.getVertices("@class", CATEGORY)) {
+		// category.addEdge(HAS_PRODUCT, product);
+		// }
 		productIds.add(product.getId());
 		return product;
 	}
 
 	public OrientVertex getRandomProduct(OrientBaseGraph tx) {
 		return tx.getVertex(productIds.get(randr.nextInt(productIds.size())));
-	}
-
-	public void updateRandomProduct() {
-
 	}
 
 	public void triggerLoad(Runnable command) throws Exception {
@@ -144,16 +154,62 @@ public class AbstractClusterTest {
 
 	public void productInserter() {
 		try {
+			String productUuid = randomUUID();
+			String infoUuid = randomUUID();
 			tx(tx -> {
-				Vertex product = insertProduct(tx);
+				Vertex product = insertProduct(tx, productUuid, infoUuid);
 				product.setProperty("name", nodeName + "@" + System.currentTimeMillis());
-				System.out.println("Insert " + product.getId());
+				System.out.println("Insert " + product.getId() + " " + productUuid + "/" + infoUuid);
 			});
-			System.out.println("Inserted");
+			System.out.println("Inserted " + productUuid + "/" + infoUuid);
 		} catch (ONeedRetryException e) {
 			e.printStackTrace();
 			System.out.println("Ignoring ONeedRetryException - normally we would retry the action.");
 		}
+	}
+
+	public Consumer<OrientVertexType> nameTypeModifier() {
+		return (vertexType) -> {
+			String typeName = vertexType.getName();
+			String fieldKey = "name";
+			vertexType.createProperty(fieldKey, OType.STRING);
+			boolean unique = false;
+			String indexName = typeName + "_name";
+			vertexType.createIndex(indexName.toLowerCase(),
+				unique ? OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString() : OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString(),
+				null, new ODocument().fields("ignoreNullValues", true), new String[] { fieldKey });
+		};
+	}
+
+	public Consumer<OrientVertexType> uuidTypeModifier() {
+		return (vertexType) -> {
+			String typeName = vertexType.getName();
+			String fieldKey = "uuid";
+			vertexType.createProperty(fieldKey, OType.STRING);
+			String indexName = typeName + "_uuid";
+			vertexType.createIndex(indexName.toLowerCase(),
+				OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString(),
+				null, new ODocument().fields("ignoreNullValues", true), new String[] { fieldKey });
+		};
+	}
+
+	public static String randomUUID() {
+		final UUID uuid = UUID.randomUUID();
+		return (digits(uuid.getMostSignificantBits() >> 32, 8) + digits(uuid.getMostSignificantBits() >> 16, 4)
+			+ digits(uuid.getMostSignificantBits(), 4) + digits(uuid.getLeastSignificantBits() >> 48, 4)
+			+ digits(uuid.getLeastSignificantBits(), 12));
+	}
+
+	/**
+	 * Returns val represented by the specified number of hex digits.
+	 * 
+	 * @param val
+	 * @param digits
+	 * @return
+	 */
+	private static String digits(long val, int digits) {
+		long hi = 1L << (digits * 4);
+		return Long.toHexString(hi | (val & (hi - 1))).substring(1);
 	}
 
 }

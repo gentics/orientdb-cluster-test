@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import org.apache.commons.io.IOUtils;
@@ -115,7 +116,8 @@ public class Database {
 
 	}
 
-	public void addVertexType(Supplier<OrientGraphNoTx> txProvider, String typeName, String superTypeName) {
+	public void addVertexType(Supplier<OrientGraphNoTx> txProvider, String typeName, String superTypeName,
+		Consumer<OrientVertexType> typeModifier) {
 
 		System.out.println("Adding vertex type for class {" + typeName + "}");
 
@@ -129,14 +131,9 @@ public class Database {
 				}
 				vertexType = noTx.createVertexType(typeName, superClazz);
 
-				// Add index
-				String fieldKey = "name";
-				vertexType.createProperty(fieldKey, OType.STRING);
-				boolean unique = false;
-				String indexName = typeName + "_name";
-				vertexType.createIndex(indexName.toLowerCase(),
-					unique ? OClass.INDEX_TYPE.UNIQUE_HASH_INDEX.toString() : OClass.INDEX_TYPE.NOTUNIQUE_HASH_INDEX.toString(),
-					null, new ODocument().fields("ignoreNullValues", true), new String[] { fieldKey });
+				if (typeModifier != null) {
+					typeModifier.accept(vertexType);
+				}
 			}
 		} finally {
 			noTx.shutdown();
