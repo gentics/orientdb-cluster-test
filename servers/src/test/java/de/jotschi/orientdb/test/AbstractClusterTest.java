@@ -22,6 +22,10 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertex;
 
 public class AbstractClusterTest {
 
+	static {
+		System.setProperty("storage.wal.allowDirectIO", "false");
+	}
+
 	public static final String CATEGORY = "Category";
 
 	public static final String PRODUCT = "Product";
@@ -109,9 +113,9 @@ public class AbstractClusterTest {
 	public OrientVertex getRandomProduct(OrientBaseGraph tx) {
 		return tx.getVertex(productIds.get(randr.nextInt(productIds.size())));
 	}
-	
+
 	public void updateRandomProduct() {
-		
+
 	}
 
 	public void triggerLoad(Runnable command) throws Exception {
