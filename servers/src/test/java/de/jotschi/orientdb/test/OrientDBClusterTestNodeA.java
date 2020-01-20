@@ -3,6 +3,9 @@ package de.jotschi.orientdb.test;
 import org.junit.Before;
 import org.junit.Test;
 
+import de.jotschi.orientdb.test.task.LoadTask;
+import de.jotschi.orientdb.test.task.impl.ProductUpdater;
+
 public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 
 	private final String NODE_NAME = "nodeA";
@@ -10,6 +13,11 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 	private static final long PRODUCT_COUNT = 100L;
 
 	private static final long CATEGORY_COUNT = 5L;
+
+	@Override
+	LoadTask getLoadTask() {
+		return new ProductUpdater(this);
+	}
 
 	@Before
 	public void setup() throws Exception {
@@ -25,11 +33,9 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 		// Initially create the needed types and vertices
 		setupDB();
 
-		triggerLoad(() -> productInserter());
+		triggerLoad(getLoadTask());
 
-		System.in.read();
-		sleep(5000);
-		db.getServer().shutdown();
+		waitAndShutdown();
 
 	}
 
@@ -48,7 +54,7 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 		// db.addEdgeType(() -> db.getNoTx(), HAS_PRODUCT, null);
 		db.addEdgeType(() -> db.getNoTx(), HAS_INFO, null);
 
-		// Insert the needed vertices
+		// Insert the graph to test with
 		createCategories();
 		insertProducts();
 
@@ -57,7 +63,7 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 	public void insertProducts() {
 		tx(tx -> {
 			for (int i = 0; i < PRODUCT_COUNT; i++) {
-				insertProduct(tx, randomUUID(), randomUUID());
+				insertProduct(tx, Utils.randomUUID(), Utils.randomUUID());
 			}
 			return null;
 		});

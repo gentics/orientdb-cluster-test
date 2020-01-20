@@ -37,6 +37,7 @@ public class LatchingDistributedLifecycleListener implements ODistributedLifecyc
 	@Override
 	public void onDatabaseChangeStatus(String iNode, String iDatabaseName, DB_STATUS iNewStatus) {
 		if ("storage".equals(iDatabaseName) && iNewStatus == DB_STATUS.ONLINE && iNode.equals(selfNodeName)) {
+			System.out.println("Database is now online on {" + iNode + "}");
 			nodeJoinLatch.countDown();
 		}
 	}

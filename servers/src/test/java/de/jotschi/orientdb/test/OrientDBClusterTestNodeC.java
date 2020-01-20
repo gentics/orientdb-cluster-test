@@ -3,9 +3,17 @@ package de.jotschi.orientdb.test;
 import org.junit.Before;
 import org.junit.Test;
 
+import de.jotschi.orientdb.test.task.LoadTask;
+import de.jotschi.orientdb.test.task.impl.ProductUpdater;
+
 public class OrientDBClusterTestNodeC extends AbstractClusterTest {
 
 	private final String NODE_NAME = "nodeC";
+
+	@Override
+	LoadTask getLoadTask() {
+		return new ProductUpdater(this);
+	}
 
 	@Before
 	public void setup() throws Exception {
@@ -20,11 +28,9 @@ public class OrientDBClusterTestNodeC extends AbstractClusterTest {
 		// Replication may occur directly or we need to wait.
 		db.waitForDB();
 
-		triggerLoad(() -> productInserter());
+		triggerLoad(getLoadTask());
 
-		System.in.read();
-		sleep(5000);
-		db.getServer().shutdown();
+		waitAndShutdown();
 
 	}
 

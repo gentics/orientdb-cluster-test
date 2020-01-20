@@ -149,7 +149,7 @@ public class Database {
 
 	public void waitForDB() throws InterruptedException {
 		System.out.println("Waiting for database");
-		listener.waitForMainGraphDB(200, TimeUnit.SECONDS);
+		listener.waitForMainGraphDB(20, TimeUnit.SECONDS);
 		System.out.println("Found database");
 	}
 
