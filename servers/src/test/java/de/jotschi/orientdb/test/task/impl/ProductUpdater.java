@@ -51,10 +51,10 @@ public class ProductUpdater extends AbstractLoadTask {
 				Vertex existingInfo2 = test.getRandomProductInfo(tx);
 				System.out.println("Deleting " + existingInfo2.getId());
 				existingInfo2.remove();
+//				System.out.println("Updating " + product.getId());
 
 				// Case E:
-				test.deleteAllProductInfos(tx);
-				System.out.println("Updating " + product.getId());
+//				test.deleteAllProductInfos(tx);
 			});
 		} catch (ONeedRetryException e) {
 			e.printStackTrace();
