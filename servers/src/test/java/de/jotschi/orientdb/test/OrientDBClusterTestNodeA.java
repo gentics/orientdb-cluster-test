@@ -3,6 +3,8 @@ package de.jotschi.orientdb.test;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.orientechnologies.orient.core.Orient;
+
 public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 
 	private final String NODE_NAME = "nodeA";
@@ -18,15 +20,10 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 
 	@Test
 	public void testCluster() throws Exception {
+		createInitialDB();
+
 		// Now start the OServer and provide the database to other nodes
 		db.startOrientServer();
-		db.create("storage");
-
-		System.out.println("Ready to setup database. Make sure all nodes joined first. Press enter to continue");
-		System.in.read();
-
-		// Initially create the needed types and vertices
-		setupDB();
 
 		triggerLoad(getLoadTask());
 
@@ -34,10 +31,19 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 
 	}
 
-	private void setupDB() {
-		// Setup needed types
+	// Initially create the needed types and vertices
+	private void createInitialDB() {
+		Orient.instance().startup();
+		db.openLocally("storage");
+		setupDB();
+		db.close();
+		Orient.instance().shutdown();
+	}
 
-		// 1. Add base type with .uuid unique index
+	// Setup needed types
+	private void setupDB() {
+
+		// 1. Add base type with uuid unique index
 		db.addVertexType(() -> db.getNoTx(), BASE, null, uuidTypeModifier());
 
 		// 2. Add extra types with .name index

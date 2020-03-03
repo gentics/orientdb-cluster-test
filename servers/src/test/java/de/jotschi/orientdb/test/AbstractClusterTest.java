@@ -138,8 +138,18 @@ public abstract class AbstractClusterTest {
 		it.forEach(v -> {
 			vertices.add(v);
 		});
+		if (vertices.isEmpty()) {
+			return null;
+		}
 
 		return vertices.get(randr.nextInt(vertices.size()));
+	}
+
+	public void deleteAllProductInfos(OrientBaseGraph tx) {
+		Iterable<Vertex> it = tx.getVerticesOfClass(AbstractClusterTest.PRODUCT_INFO);
+		it.forEach(v -> {
+			v.remove();
+		});
 	}
 
 	public void triggerLoad(LoadTask task) throws Exception {

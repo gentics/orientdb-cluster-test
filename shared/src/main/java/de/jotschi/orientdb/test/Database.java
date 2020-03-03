@@ -34,6 +34,7 @@ public class Database {
 	private String nodeName;
 	private String basePath;
 	private OServer server;
+	private OrientGraphFactory factory;
 	private String httpPort;
 	private String binPort;
 	private LatchingDistributedLifecycleListener listener;
@@ -154,17 +155,40 @@ public class Database {
 	}
 
 	public OrientGraph getTx() {
-		ODatabaseSession db = server.getContext().open("storage", "admin", "admin");
-		return (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph((ODatabaseDocumentInternal) db);
+		if (factory != null) {
+			return factory.getTx();
+		} else {
+			ODatabaseSession db = server.getContext().open("storage", "admin", "admin");
+			return (OrientGraph) OrientGraphFactory.getTxGraphImplFactory().getGraph((ODatabaseDocumentInternal) db);
+		}
 	}
 
 	public OrientGraphNoTx getNoTx() {
-		ODatabaseSession db = server.getContext().open("storage", "admin", "admin");
-		return (OrientGraphNoTx) OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentInternal) db);
+		if (factory != null) {
+			return factory.getNoTx();
+		} else {
+			ODatabaseSession db = server.getContext().open("storage", "admin", "admin");
+			return (OrientGraphNoTx) OrientGraphFactory.getNoTxGraphImplFactory().getGraph((ODatabaseDocumentInternal) db);
+		}
 	}
 
 	public void create(String name) {
 		server.createDatabase(name, ODatabaseType.PLOCAL, OrientDBConfig.defaultConfig());
+	}
+
+	public void openLocally(String name) {
+		File base = new File("target", nodeName);
+		factory = new OrientGraphFactory("plocal:" + new File(base, name).getAbsolutePath()).setupPool(16, 100);
+	}
+
+	public void close() {
+		if (factory != null) {
+			factory.close();
+			factory = null;
+		}
+		if (server != null) {
+			server.shutdown();
+		}
 	}
 
 }
