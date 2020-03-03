@@ -3,9 +3,6 @@ package de.jotschi.orientdb.test;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.jotschi.orientdb.test.task.LoadTask;
-import de.jotschi.orientdb.test.task.impl.ProductUpdater;
-
 public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 
 	private final String NODE_NAME = "nodeA";
@@ -13,11 +10,6 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 	private static final long PRODUCT_COUNT = 100L;
 
 	private static final long CATEGORY_COUNT = 5L;
-
-	@Override
-	LoadTask getLoadTask() {
-		return new ProductUpdater(this);
-	}
 
 	@Before
 	public void setup() throws Exception {
@@ -55,31 +47,9 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 		db.addEdgeType(() -> db.getNoTx(), HAS_INFO, null);
 
 		// Insert the graph to test with
-		createCategories();
-		insertProducts();
+		createCategories(CATEGORY_COUNT);
+		insertProducts(PRODUCT_COUNT);
 
-	}
-
-	public void insertProducts() {
-		tx(tx -> {
-			for (int i = 0; i < PRODUCT_COUNT; i++) {
-				insertProduct(tx, Utils.randomUUID(), Utils.randomUUID());
-			}
-			return null;
-		});
-		System.out.println("Inserted " + PRODUCT_COUNT + " products..");
-	}
-
-	public void createCategories() {
-		tx(tx -> {
-			for (int i = 0; i < CATEGORY_COUNT; i++) {
-				Object id = tx.addVertex("class:" + CATEGORY).getId();
-				categoryIds.add(id);
-				System.out.println("Create category " + id);
-			}
-			return null;
-		});
-		System.out.println("Created " + CATEGORY_COUNT + " categories...");
 	}
 
 }

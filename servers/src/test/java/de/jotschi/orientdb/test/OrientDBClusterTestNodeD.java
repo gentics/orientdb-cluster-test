@@ -3,13 +3,13 @@ package de.jotschi.orientdb.test;
 import org.junit.Before;
 import org.junit.Test;
 
-public class OrientDBClusterTestNodeC extends AbstractClusterTest {
+public class OrientDBClusterTestNodeD extends AbstractClusterTest {
 
-	private final String NODE_NAME = "nodeC";
+	private final String NODE_NAME = "nodeD";
 
 	@Before
 	public void setup() throws Exception {
-		setup(NODE_NAME, "2482-2482", "2426-2426");
+		setup(NODE_NAME, "2483-2483", "2427-2427");
 	}
 
 	@Test

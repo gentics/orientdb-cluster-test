@@ -3,17 +3,9 @@ package de.jotschi.orientdb.test;
 import org.junit.Before;
 import org.junit.Test;
 
-import de.jotschi.orientdb.test.task.LoadTask;
-import de.jotschi.orientdb.test.task.impl.ProductUpdater;
-
 public class OrientDBClusterTestNodeB extends AbstractClusterTest {
 
 	private final String NODE_NAME = "nodeB";
-
-	@Override
-	LoadTask getLoadTask() {
-		return new ProductUpdater(this);
-	}
 
 	@Before
 	public void setup() throws Exception {

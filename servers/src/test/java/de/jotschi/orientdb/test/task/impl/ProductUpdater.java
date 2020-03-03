@@ -15,6 +15,8 @@ import de.jotschi.orientdb.test.task.AbstractLoadTask;
  * B) Add new edge between existing vertices
  * 
  * C) Add new edge to new vertex
+ * 
+ * D) Delete a random vertex
  */
 public class ProductUpdater extends AbstractLoadTask {
 
@@ -40,6 +42,10 @@ public class ProductUpdater extends AbstractLoadTask {
 				// Case C:
 				Vertex info = test.createProductInfo(tx, Utils.randomUUID());
 				product.addEdge(AbstractClusterTest.HAS_INFO, info);
+
+				// Case D:
+				Vertex existingInfo2 = test.getRandomProductInfo(tx);
+				existingInfo2.remove();
 
 				System.out.println("Updated " + product.getId());
 			});

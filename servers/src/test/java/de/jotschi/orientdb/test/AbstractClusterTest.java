@@ -24,6 +24,7 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 import de.jotschi.orientdb.test.task.LoadTask;
+import de.jotschi.orientdb.test.task.impl.ProductUpdater;
 
 public abstract class AbstractClusterTest {
 
@@ -54,7 +55,9 @@ public abstract class AbstractClusterTest {
 
 	public String nodeName;
 
-	abstract LoadTask getLoadTask();
+	public LoadTask getLoadTask() {
+		return new ProductUpdater(this);
+	}
 
 	protected void setup(String name, String httpPort, String binPort) throws Exception {
 		this.nodeName = name;
@@ -128,7 +131,7 @@ public abstract class AbstractClusterTest {
 
 		return vertices.get(randr.nextInt(vertices.size()));
 	}
-	
+
 	public Vertex getRandomProductInfo(OrientBaseGraph tx) {
 		Iterable<Vertex> it = tx.getVerticesOfClass(AbstractClusterTest.PRODUCT_INFO);
 		List<Vertex> vertices = new ArrayList<>();
@@ -200,6 +203,28 @@ public abstract class AbstractClusterTest {
 		Utils.sleep(5000);
 		db.getServer().shutdown();
 
+	}
+
+	public void insertProducts(long nProducts) {
+		tx(tx -> {
+			for (int i = 0; i < nProducts; i++) {
+				insertProduct(tx, Utils.randomUUID(), Utils.randomUUID());
+			}
+			return null;
+		});
+		System.out.println("Inserted " + nProducts + " products..");
+	}
+
+	public void createCategories(long nCategories) {
+		tx(tx -> {
+			for (int i = 0; i < nCategories; i++) {
+				Object id = tx.addVertex("class:" + CATEGORY).getId();
+				categoryIds.add(id);
+				System.out.println("Create category " + id);
+			}
+			return null;
+		});
+		System.out.println("Created " + nCategories + " categories...");
 	}
 
 }
