@@ -22,6 +22,9 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 		db.startOrientServer();
 		db.create("storage");
 
+		System.out.println("Ready to setup database. Make sure all nodes joined first. Press enter to continue");
+		System.in.read();
+
 		// Initially create the needed types and vertices
 		setupDB();
 
