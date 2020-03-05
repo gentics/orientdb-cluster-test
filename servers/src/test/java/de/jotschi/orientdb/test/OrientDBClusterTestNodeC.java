@@ -20,8 +20,6 @@ public class OrientDBClusterTestNodeC extends AbstractClusterTest {
 		// Replication may occur directly or we need to wait.
 		db.waitForDB();
 
-		triggerLoad(getLoadTask());
-
 		waitAndShutdown();
 
 	}
