@@ -30,31 +30,42 @@ public class ProductUpdater extends AbstractLoadTask {
 	public void runTask() {
 		try {
 			test.tx(tx -> {
-				// Case A:
-				String randomId = Utils.randomUUID();
-				Vertex product = test.getRandomProduct(tx);
-				product.setProperty("name", test.nodeName + "@" + System.currentTimeMillis());
-				// Set a random property
-				product.setProperty(randomId, randomId);
 
-				// Case B:
-				Vertex existingInfo = test.getRandomProductInfo(tx);
-				if (existingInfo != null) {
-					existingInfo.addEdge(AbstractClusterTest.HAS_INFO, product);
+				Vertex p1 = test.getRandomProduct(tx);
+				Object id = p1.getId();
+				// Read data
+				for (int i = 0; i < 10; i++) {
+					Vertex p = test.getRandomProduct(tx);
+					p.getProperty("name");
 				}
+				// Test nested tx
+				test.tx(tx2 -> {
+					// Case A:
+					Vertex product = tx2.getVertex(id);
+					String randomId = Utils.randomUUID();
+					product.setProperty("name", test.nodeName + "@" + System.currentTimeMillis());
+					// Set a random property
+					product.setProperty(randomId, randomId);
 
-				// Case C:
-				Vertex info = test.createProductInfo(tx, Utils.randomUUID());
-				product.addEdge(AbstractClusterTest.HAS_INFO, info);
+					// Case B:
+					Vertex existingInfo = test.getRandomProductInfo(tx2);
+					if (existingInfo != null) {
+						existingInfo.addEdge(AbstractClusterTest.HAS_INFO, product);
+					}
 
-				// Case D:
-				Vertex existingInfo2 = test.getRandomProductInfo(tx);
-				System.out.println("Deleting " + existingInfo2.getId());
-				existingInfo2.remove();
-//				System.out.println("Updating " + product.getId());
+					// Case C:
+					Vertex info = test.createProductInfo(tx2, Utils.randomUUID());
+					product.addEdge(AbstractClusterTest.HAS_INFO, info);
 
-				// Case E:
-//				test.deleteAllProductInfos(tx);
+					// Case D:
+					Vertex existingInfo2 = test.getRandomProductInfo(tx2);
+					System.out.println("Deleting " + existingInfo2.getId());
+					existingInfo2.remove();
+					// System.out.println("Updating " + product.getId());
+
+					// Case E:
+					// test.deleteAllProductInfos(tx2);
+				});
 			});
 		} catch (ONeedRetryException e) {
 			e.printStackTrace();
