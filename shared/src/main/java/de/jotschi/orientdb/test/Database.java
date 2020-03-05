@@ -12,6 +12,7 @@ import java.util.function.Supplier;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 
+import com.hazelcast.core.HazelcastInstance;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -21,7 +22,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
+import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -34,6 +37,7 @@ public class Database {
 	private String nodeName;
 	private String basePath;
 	private OServer server;
+	private HazelcastInstance hz;
 	private OrientGraphFactory factory;
 	private String httpPort;
 	private String binPort;
@@ -83,7 +87,13 @@ public class Database {
 		OServerPluginManager manager = new OServerPluginManager();
 		manager.config(server);
 		server.activate();
-		server.getDistributedManager().registerLifecycleListener(listener);
+		ODistributedServerManager distributedManager = server.getDistributedManager();
+		distributedManager.registerLifecycleListener(listener);
+
+		if (server.getDistributedManager() instanceof OHazelcastPlugin) {
+			OHazelcastPlugin hazelcastPlugin = (OHazelcastPlugin) distributedManager;
+			hz = hazelcastPlugin.getHazelcastInstance();
+		}
 		manager.startup();
 		postStartupDBEventHandling();
 		return server;
@@ -189,6 +199,10 @@ public class Database {
 		if (server != null) {
 			server.shutdown();
 		}
+	}
+
+	public HazelcastInstance getHazelcast() {
+		return hz;
 	}
 
 }

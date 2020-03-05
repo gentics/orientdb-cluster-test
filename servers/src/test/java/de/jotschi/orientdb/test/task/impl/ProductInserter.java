@@ -14,7 +14,7 @@ public class ProductInserter extends AbstractLoadTask {
 	}
 
 	@Override
-	public void runTask() {
+	public void runTask(long txDelay) {
 		try {
 			String productUuid = Utils.randomUUID();
 			String infoUuid = Utils.randomUUID();

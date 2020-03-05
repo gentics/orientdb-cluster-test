@@ -1,5 +1,8 @@
 package de.jotschi.orientdb.test.task.impl;
 
+import java.util.concurrent.locks.Lock;
+
+import com.hazelcast.core.HazelcastInstance;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.tinkerpop.blueprints.Vertex;
 
@@ -17,8 +20,6 @@ import de.jotschi.orientdb.test.task.AbstractLoadTask;
  * C) Add new edge to new vertex
  * 
  * D) Delete a random vertex
- * 
- * E) Delete all product Infos
  */
 public class ProductUpdater extends AbstractLoadTask {
 
@@ -27,7 +28,10 @@ public class ProductUpdater extends AbstractLoadTask {
 	}
 
 	@Override
-	public void runTask() {
+	public void runTask(long txDelay) {
+		HazelcastInstance hz = test.getDb().getHazelcast();
+		Lock lock = hz.getLock("TX_LOCK");
+		lock.lock();
 		try {
 			test.tx(tx -> {
 
@@ -59,17 +63,25 @@ public class ProductUpdater extends AbstractLoadTask {
 				Vertex existingInfo2 = test.getRandomProductInfo(tx);
 				System.out.println("Deleting " + existingInfo2.getId());
 				existingInfo2.remove();
-				// System.out.println("Updating " + product.getId());
 
-				// Case E:
-				// test.deleteAllProductInfos(tx2);
+				// Simulate long running tx
+				try {
+					Thread.sleep(txDelay);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+
 			});
 		} catch (ONeedRetryException e) {
 			e.printStackTrace();
 			System.out.println("Ignoring ONeedRetryException - normally we would retry the action.");
 		} catch (Throwable t) {
 			t.printStackTrace();
+		} finally {
+			lock.unlock();
 		}
+
 	}
 
 }
