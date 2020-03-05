@@ -38,38 +38,37 @@ public class ProductUpdater extends AbstractLoadTask {
 					Vertex p = test.getRandomProduct(tx);
 					p.getProperty("name");
 				}
-				// Test nested tx
-				test.tx(tx2 -> {
-					// Case A:
-					Vertex product = tx2.getVertex(id);
-					String randomId = Utils.randomUUID();
-					product.setProperty("name", test.nodeName + "@" + System.currentTimeMillis());
-					// Set a random property
-					product.setProperty(randomId, randomId);
+				// Case A:
+				Vertex product = tx.getVertex(id);
+				String randomId = Utils.randomUUID();
+				product.setProperty("name", test.nodeName + "@" + System.currentTimeMillis());
+				// Set a random property
+				product.setProperty(randomId, randomId);
 
-					// Case B:
-					Vertex existingInfo = test.getRandomProductInfo(tx2);
-					if (existingInfo != null) {
-						existingInfo.addEdge(AbstractClusterTest.HAS_INFO, product);
-					}
+				// Case B:
+				Vertex existingInfo = test.getRandomProductInfo(tx);
+				if (existingInfo != null) {
+					existingInfo.addEdge(AbstractClusterTest.HAS_INFO, product);
+				}
 
-					// Case C:
-					Vertex info = test.createProductInfo(tx2, Utils.randomUUID());
-					product.addEdge(AbstractClusterTest.HAS_INFO, info);
+				// Case C:
+				Vertex info = test.createProductInfo(tx, Utils.randomUUID());
+				product.addEdge(AbstractClusterTest.HAS_INFO, info);
 
-					// Case D:
-					Vertex existingInfo2 = test.getRandomProductInfo(tx2);
-					System.out.println("Deleting " + existingInfo2.getId());
-					existingInfo2.remove();
-					// System.out.println("Updating " + product.getId());
+				// Case D:
+				Vertex existingInfo2 = test.getRandomProductInfo(tx);
+				System.out.println("Deleting " + existingInfo2.getId());
+				existingInfo2.remove();
+				// System.out.println("Updating " + product.getId());
 
-					// Case E:
-					// test.deleteAllProductInfos(tx2);
-				});
+				// Case E:
+				// test.deleteAllProductInfos(tx2);
 			});
 		} catch (ONeedRetryException e) {
 			e.printStackTrace();
 			System.out.println("Ignoring ONeedRetryException - normally we would retry the action.");
+		} catch (Throwable t) {
+			t.printStackTrace();
 		}
 	}
 
