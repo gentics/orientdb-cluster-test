@@ -48,7 +48,6 @@ public class Database {
 		this.basePath = basePath;
 		this.httpPort = httpPort;
 		this.binPort = binPort;
-		this.listener = new LatchingDistributedLifecycleListener(nodeName);
 	}
 
 	public OServer getServer() {
@@ -88,12 +87,14 @@ public class Database {
 		manager.config(server);
 		server.activate();
 		ODistributedServerManager distributedManager = server.getDistributedManager();
-		distributedManager.registerLifecycleListener(listener);
-
 		if (server.getDistributedManager() instanceof OHazelcastPlugin) {
 			OHazelcastPlugin hazelcastPlugin = (OHazelcastPlugin) distributedManager;
 			hz = hazelcastPlugin.getHazelcastInstance();
 		}
+		this.listener = new LatchingDistributedLifecycleListener(nodeName, hz);
+		distributedManager.registerLifecycleListener(listener);
+
+		
 		manager.startup();
 		postStartupDBEventHandling();
 		return server;

@@ -1,9 +1,12 @@
 package de.jotschi.orientdb.test.task.impl;
 
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.orientechnologies.common.concur.ONeedRetryException;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.tinkerpop.blueprints.Vertex;
 
 import de.jotschi.orientdb.test.AbstractClusterTest;
@@ -32,6 +35,7 @@ public class ProductUpdater extends AbstractLoadTask {
 		HazelcastInstance hz = test.getDb().getHazelcast();
 		Lock lock = hz.getLock("TX_LOCK");
 		lock.lock();
+		checkForDB();
 		try {
 			test.tx(tx -> {
 
@@ -82,6 +86,35 @@ public class ProductUpdater extends AbstractLoadTask {
 			lock.unlock();
 		}
 
+	}
+
+	private void checkForDB() {
+		HazelcastInstance hz = test.getDb().getHazelcast();
+		Map<String, DB_STATUS> map = hz.getMap("STATUS_MAP");
+		for (int i = 0; i < 40; i++) {
+			boolean foundState = false;
+			for (Entry<String, DB_STATUS> entry : map.entrySet()) {
+				DB_STATUS status = entry.getValue();
+				System.out.println(entry.getKey() + " = " + entry.getValue().name());
+				switch (status) {
+				case BACKUP:
+				case SYNCHRONIZING:
+					System.out.println("Locking since " + entry.getKey() + " is in status " + entry.getValue());
+					foundState = true;
+				default:
+					continue;
+				}
+			}
+			if (!foundState) {
+				return;
+			}
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 	}
 
 }
