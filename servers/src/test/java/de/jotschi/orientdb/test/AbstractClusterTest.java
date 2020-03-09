@@ -153,22 +153,26 @@ public abstract class AbstractClusterTest {
 	}
 
 	public void triggerLoad(LoadTask task) throws Exception {
+		// Define the test parameter
 		long txDelay = 0;
+		boolean lockTx = false;
+		boolean lockForDBSync = false;
+
 		// Now continue to update the products concurrently
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 		System.out.println("Press any key to start load");
 		System.in.read();
 		System.out.println("Invoking task execution #1");
-		executor.scheduleAtFixedRate(() -> task.runTask(txDelay), 100, 500, TimeUnit.MILLISECONDS);
+		executor.scheduleAtFixedRate(() -> task.runTask(txDelay, lockTx, lockForDBSync), 100, 500, TimeUnit.MILLISECONDS);
 		System.in.read();
 		System.out.println("Invoking task execution #2");
-		executor.scheduleAtFixedRate(() -> task.runTask(txDelay), 100, 20, TimeUnit.MILLISECONDS);
+		executor.scheduleAtFixedRate(() -> task.runTask(txDelay, lockTx, lockForDBSync), 100, 20, TimeUnit.MILLISECONDS);
 		System.in.read();
 		System.out.println("Invoking task execution #3");
-		executor.scheduleAtFixedRate(() -> task.runTask(txDelay), 100, 20, TimeUnit.MILLISECONDS);
+		executor.scheduleAtFixedRate(() -> task.runTask(txDelay, lockTx, lockForDBSync), 100, 20, TimeUnit.MILLISECONDS);
 		System.in.read();
 		System.out.println("Invoking task execution #4");
-		executor.scheduleAtFixedRate(() -> task.runTask(txDelay), 100, 20, TimeUnit.MILLISECONDS);
+		executor.scheduleAtFixedRate(() -> task.runTask(txDelay, lockTx, lockForDBSync), 100, 20, TimeUnit.MILLISECONDS);
 
 		System.out.println("Press any key to shutdown the execution");
 		System.in.read();
@@ -180,7 +184,7 @@ public abstract class AbstractClusterTest {
 			"Press any key to update product one more time. This time no lock error should occure since the other TX's have been terminated.");
 
 		System.in.read();
-		task.runTask(txDelay);
+		task.runTask(txDelay, lockTx, lockForDBSync);
 	}
 
 	public Consumer<OrientVertexType> nameTypeModifier() {
@@ -237,7 +241,7 @@ public abstract class AbstractClusterTest {
 		});
 		System.out.println("Created " + nCategories + " categories...");
 	}
-	
+
 	public Database getDb() {
 		return db;
 	}

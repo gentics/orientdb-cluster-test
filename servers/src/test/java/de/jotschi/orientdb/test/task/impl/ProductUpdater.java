@@ -31,11 +31,16 @@ public class ProductUpdater extends AbstractLoadTask {
 	}
 
 	@Override
-	public void runTask(long txDelay) {
-		HazelcastInstance hz = test.getDb().getHazelcast();
-		Lock lock = hz.getLock("TX_LOCK");
-		lock.lock();
-		checkForDB();
+	public void runTask(long txDelay, boolean lockTx, boolean lockForDBSync) {
+		Lock lock = null;
+		if (lockTx) {
+			HazelcastInstance hz = test.getDb().getHazelcast();
+			lock = hz.getLock("TX_LOCK");
+			lock.lock();
+		}
+		if (lockForDBSync) {
+			checkForDB();
+		}
 		try {
 			test.tx(tx -> {
 
@@ -83,7 +88,9 @@ public class ProductUpdater extends AbstractLoadTask {
 		} catch (Throwable t) {
 			t.printStackTrace();
 		} finally {
-			lock.unlock();
+			if (lock != null) {
+				lock.unlock();
+			}
 		}
 
 	}

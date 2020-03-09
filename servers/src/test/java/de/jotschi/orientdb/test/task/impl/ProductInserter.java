@@ -14,7 +14,7 @@ public class ProductInserter extends AbstractLoadTask {
 	}
 
 	@Override
-	public void runTask(long txDelay) {
+	public void runTask(long txDelay, boolean lockTx, boolean lockForDBSync) {
 		try {
 			String productUuid = Utils.randomUUID();
 			String infoUuid = Utils.randomUUID();
