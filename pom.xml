@@ -13,7 +13,7 @@
 	</modules>
 
 	<properties>
-		<orientdb.version>3.0.29</orientdb.version>
+		<orientdb.version>3.0.23</orientdb.version>
 		<!-- <mesh.version>1.4.1</mesh.version> <hazelcast.version>3.10.6</hazelcast.version> -->
 	</properties>
 
