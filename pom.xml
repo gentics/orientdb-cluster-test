@@ -9,7 +9,6 @@
 	<modules>
 		<module>shared</module>
 		<module>servers</module>
-		<module>testenv</module>
 	</modules>
 
 	<properties>
