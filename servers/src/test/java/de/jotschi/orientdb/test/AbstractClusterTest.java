@@ -67,6 +67,7 @@ public abstract class AbstractClusterTest {
 
 	public void initDB(String name, String graphDbBasePath, String httpPort, String binPort) throws Exception {
 		OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
+		OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.setValue("target/backup_" + name);
 		db = new Database(name, graphDbBasePath, httpPort, binPort);
 	}
 
@@ -159,7 +160,7 @@ public abstract class AbstractClusterTest {
 		System.out.println("Invoking task execution #1");
 		executor.scheduleAtFixedRate(() -> task.runTask(txDelay, lockTx, lockForDBSync), 100, 5000, TimeUnit.MILLISECONDS);
 	}
-	
+
 	public void triggerLoad(LoadTask task) throws Exception {
 
 		// Now continue to invoke task
