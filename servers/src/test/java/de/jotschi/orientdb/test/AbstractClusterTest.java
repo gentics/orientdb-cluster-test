@@ -24,7 +24,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientGraph;
 import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 import de.jotschi.orientdb.test.task.LoadTask;
-import de.jotschi.orientdb.test.task.impl.ProductUpdater;
 
 public abstract class AbstractClusterTest {
 
@@ -32,6 +31,11 @@ public abstract class AbstractClusterTest {
 		// Disable direct IO (My dev system uses ZFS. Otherwise the test will not run)
 		System.setProperty("storage.wal.allowDirectIO", "false");
 	}
+
+	// Define the test parameter
+	static final long txDelay = 0;
+	static final boolean lockTx = true;
+	static final boolean lockForDBSync = false;
 
 	public static final String HAS_PRODUCT = "HAS_PRODUCT";
 
@@ -54,10 +58,6 @@ public abstract class AbstractClusterTest {
 	public List<Object> categoryIds = new ArrayList<>();
 
 	public String nodeName;
-
-	public LoadTask getLoadTask() {
-		return new ProductUpdater(this);
-	}
 
 	protected void setup(String name, String httpPort, String binPort) throws Exception {
 		this.nodeName = name;
@@ -152,13 +152,17 @@ public abstract class AbstractClusterTest {
 		});
 	}
 
+	public void triggerSlowLoad(LoadTask task) throws Exception {
+		ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
+		System.out.println("Press any key to start load");
+		System.in.read();
+		System.out.println("Invoking task execution #1");
+		executor.scheduleAtFixedRate(() -> task.runTask(txDelay, lockTx, lockForDBSync), 100, 5000, TimeUnit.MILLISECONDS);
+	}
+	
 	public void triggerLoad(LoadTask task) throws Exception {
-		// Define the test parameter
-		long txDelay = 0;
-		boolean lockTx = false;
-		boolean lockForDBSync = false;
 
-		// Now continue to update the products concurrently
+		// Now continue to invoke task
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
 		System.out.println("Press any key to start load");
 		System.in.read();

@@ -5,6 +5,8 @@ import org.junit.Test;
 
 import com.orientechnologies.orient.core.Orient;
 
+import de.jotschi.orientdb.test.task.impl.ProductUpdaterTask;
+
 public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 
 	private final String NODE_NAME = "nodeA";
@@ -23,9 +25,9 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 		createInitialDB();
 
 		// Now start the OServer and provide the database to other nodes
-		db.startOrientServer();
+		db.startOrientServer(false);
 
-		triggerLoad(getLoadTask());
+		triggerLoad(new ProductUpdaterTask(this));
 
 		waitAndShutdown();
 

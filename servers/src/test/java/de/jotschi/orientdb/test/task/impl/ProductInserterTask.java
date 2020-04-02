@@ -7,9 +7,9 @@ import de.jotschi.orientdb.test.AbstractClusterTest;
 import de.jotschi.orientdb.test.Utils;
 import de.jotschi.orientdb.test.task.AbstractLoadTask;
 
-public class ProductInserter extends AbstractLoadTask {
+public class ProductInserterTask extends AbstractLoadTask {
 
-	public ProductInserter(AbstractClusterTest test) {
+	public ProductInserterTask(AbstractClusterTest test) {
 		super(test);
 	}
 

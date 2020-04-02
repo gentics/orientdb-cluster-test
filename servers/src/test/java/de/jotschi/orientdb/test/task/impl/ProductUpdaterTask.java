@@ -10,6 +10,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.tinkerpop.blueprints.Vertex;
 
 import de.jotschi.orientdb.test.AbstractClusterTest;
+import de.jotschi.orientdb.test.Database;
 import de.jotschi.orientdb.test.Utils;
 import de.jotschi.orientdb.test.task.AbstractLoadTask;
 
@@ -24,9 +25,9 @@ import de.jotschi.orientdb.test.task.AbstractLoadTask;
  * 
  * D) Delete a random vertex
  */
-public class ProductUpdater extends AbstractLoadTask {
+public class ProductUpdaterTask extends AbstractLoadTask {
 
-	public ProductUpdater(AbstractClusterTest test) {
+	public ProductUpdaterTask(AbstractClusterTest test) {
 		super(test);
 	}
 
@@ -35,7 +36,7 @@ public class ProductUpdater extends AbstractLoadTask {
 		Lock lock = null;
 		if (lockTx) {
 			HazelcastInstance hz = test.getDb().getHazelcast();
-			lock = hz.getLock("TX_LOCK");
+			lock = hz.getLock(Database.TX_LOCK_KEY);
 			lock.lock();
 		}
 		if (lockForDBSync) {

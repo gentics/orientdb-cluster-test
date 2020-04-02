@@ -1,10 +1,17 @@
 package de.jotschi.orientdb.test;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -13,6 +20,8 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringEscapeUtils;
 
 import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.ILock;
+import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -22,9 +31,9 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
+import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.tinkerpop.blueprints.impls.orient.OrientEdgeType;
 import com.tinkerpop.blueprints.impls.orient.OrientGraph;
@@ -34,14 +43,16 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 
 public class Database {
 
+	public static final String TX_LOCK_KEY = "TX_LOCK";
+
 	private String nodeName;
 	private String basePath;
 	private OServer server;
-	private HazelcastInstance hz;
 	private OrientGraphFactory factory;
 	private String httpPort;
 	private String binPort;
 	private LatchingDistributedLifecycleListener listener;
+	private HazelcastInstance hazelcastInstance;
 
 	public Database(String nodeName, String basePath, String httpPort, String binPort) {
 		this.nodeName = nodeName;
@@ -75,7 +86,7 @@ public class Database {
 		return StringEscapeUtils.escapeJava(StringEscapeUtils.escapeXml11(new File(path).getAbsolutePath()));
 	}
 
-	public OServer startOrientServer() throws Exception {
+	public OServer startOrientServer(boolean waitForDB) throws Exception {
 
 		String orientdbHome = new File("").getAbsolutePath();
 		System.setProperty("ORIENTDB_HOME", orientdbHome);
@@ -83,21 +94,42 @@ public class Database {
 			this.server = OServerMain.create();
 		}
 		server.startup(getOrientServerConfig());
-		OServerPluginManager manager = new OServerPluginManager();
-		manager.config(server);
-		server.activate();
-		ODistributedServerManager distributedManager = server.getDistributedManager();
-		if (server.getDistributedManager() instanceof OHazelcastPlugin) {
-			OHazelcastPlugin hazelcastPlugin = (OHazelcastPlugin) distributedManager;
-			hz = hazelcastPlugin.getHazelcastInstance();
-		}
-		this.listener = new LatchingDistributedLifecycleListener(nodeName, hz);
-		distributedManager.registerLifecycleListener(listener);
+		startHazelcast();
 
-		
-		manager.startup();
-		postStartupDBEventHandling();
+		ILock lock = hazelcastInstance.getLock(TX_LOCK_KEY);
+		lock.lock();
+		try {
+			OServerPluginManager manager = new OServerPluginManager();
+			manager.config(server);
+			server.activate();
+			ODistributedServerManager distributedManager = server.getDistributedManager();
+			this.listener = new LatchingDistributedLifecycleListener(nodeName, hazelcastInstance);
+			distributedManager.registerLifecycleListener(listener);
+
+			manager.startup();
+			postStartupDBEventHandling();
+			System.out.println("Server startup done");
+
+			// Replication may occur directly or we need to wait.
+			if (waitForDB) {
+				waitForDB();
+			}
+
+		} finally {
+			System.out.println("Releasing lock");
+			lock.unlock();
+		}
 		return server;
+	}
+
+	public void startHazelcast() throws FileNotFoundException {
+		Optional<OServerHandlerConfiguration> hazelcastPluginConfigOpt = server.getConfiguration().handlers.stream()
+			.filter(e -> e.clazz.equals(CustomOHazelcastPlugin.class.getName())).findFirst();
+		if (!hazelcastPluginConfigOpt.isPresent()) {
+			throw new RuntimeException("Could not find hazelcast plugin configuration in orientdb configuration file");
+		}
+		OServerHandlerConfiguration hazelcastPluginConfig = hazelcastPluginConfigOpt.get();
+		hazelcastInstance = CustomOHazelcastPlugin.createHazelcast(hazelcastPluginConfig.parameters);
 	}
 
 	public void addEdgeType(Supplier<OrientGraphNoTx> txProvider, String label, String superTypeName) {
@@ -159,7 +191,7 @@ public class Database {
 		listener.onDatabaseChangeStatus(nodeName, "storage", status);
 	}
 
-	public void waitForDB() throws InterruptedException {
+	private void waitForDB() throws InterruptedException {
 		System.out.println("Waiting for database");
 		listener.waitForMainGraphDB(20, TimeUnit.SECONDS);
 		System.out.println("Found database");
@@ -203,7 +235,32 @@ public class Database {
 	}
 
 	public HazelcastInstance getHazelcast() {
-		return hz;
+		return hazelcastInstance;
+	}
+
+	public void backup() {
+		DateFormat formatter = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss-SSS");
+		String backupDirectory = "target/backups";
+		ODatabaseSession db = server.getContext().open("storage", "admin", "admin");
+		try {
+			OCommandOutputListener listener = new OCommandOutputListener() {
+				@Override
+				public void onMessage(String iText) {
+					System.out.println(iText);
+				}
+			};
+			String dateString = formatter.format(new Date());
+			String backupFile = "backup_" + dateString + ".zip";
+			new File(backupDirectory).mkdirs();
+			String absolutePath = new File(backupDirectory, backupFile).getAbsolutePath();
+			try (OutputStream out = new FileOutputStream(absolutePath)) {
+				db.backup(out, null, null, listener, 1, 2048);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} finally {
+			db.close();
+		}
 	}
 
 }

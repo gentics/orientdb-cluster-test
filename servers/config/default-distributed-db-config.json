@@ -3,11 +3,12 @@
   "hotAlignment": true,
   "executionMode": "synchronous",
   "readQuorum": 1,
-  "writeQuorum": "majority",
+  "writeQuorum": 2,
   "failureAvailableNodesLessQuorum": false,
   "readYourWrites": true,
   "servers": {
-    "*": "master"
+    "*": "master",
+    "node-backup": "replica"
   },
   "clusters": {
     "internal": {

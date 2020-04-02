@@ -15,12 +15,7 @@ public class OrientDBClusterTestNodeB extends AbstractClusterTest {
 	@Test
 	public void testCluster() throws Exception {
 		// Start the orient server - it will connect to other nodes and replicate the found database
-		db.startOrientServer();
-
-		// Replication may occur directly or we need to wait.
-		db.waitForDB();
-
-		triggerLoad(getLoadTask());
+		db.startOrientServer(true);
 
 		waitAndShutdown();
 

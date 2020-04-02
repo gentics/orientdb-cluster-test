@@ -3,9 +3,11 @@ package de.jotschi.orientdb.test;
 import org.junit.Before;
 import org.junit.Test;
 
-public class OrientDBClusterTestNodeD extends AbstractClusterTest {
+import de.jotschi.orientdb.test.task.impl.BackupTask;
 
-	private final String NODE_NAME = "nodeD";
+public class OrientDBClusterTestBackupNode extends AbstractClusterTest {
+
+	private final String NODE_NAME = "node-backup";
 
 	@Before
 	public void setup() throws Exception {
@@ -15,10 +17,9 @@ public class OrientDBClusterTestNodeD extends AbstractClusterTest {
 	@Test
 	public void testCluster() throws Exception {
 		// Start the orient server - it will connect to other nodes and replicate the found database
-		db.startOrientServer();
+		db.startOrientServer(true);
 
-		// Replication may occur directly or we need to wait.
-		db.waitForDB();
+		triggerSlowLoad(new BackupTask(this));
 
 		waitAndShutdown();
 
