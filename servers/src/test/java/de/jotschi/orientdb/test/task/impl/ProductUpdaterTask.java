@@ -71,7 +71,7 @@ public class ProductUpdaterTask extends AbstractLoadTask {
 
 				// Case D:
 				Vertex existingInfo2 = test.getRandomProductInfo(tx);
-				System.out.println("Deleting " + existingInfo2.getId());
+				System.out.println("Done");
 				existingInfo2.remove();
 
 				// Simulate long running tx

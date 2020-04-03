@@ -7,3 +7,5 @@ orient-plugins
 backup
 databases
 .factorypath
+*.iml
+.idea

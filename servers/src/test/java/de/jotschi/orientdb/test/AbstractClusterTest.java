@@ -29,7 +29,7 @@ public abstract class AbstractClusterTest {
 
 	static {
 		// Disable direct IO (My dev system uses ZFS. Otherwise the test will not run)
-		System.setProperty("storage.wal.allowDirectIO", "false");
+		System.setProperty("storage.wal.allowDirectIO", "true");
 	}
 
 	// Define the test parameter
