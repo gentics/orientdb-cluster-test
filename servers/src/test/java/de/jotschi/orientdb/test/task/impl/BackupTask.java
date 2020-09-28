@@ -1,11 +1,6 @@
 package de.jotschi.orientdb.test.task.impl;
 
-import java.util.concurrent.locks.Lock;
-
-import com.hazelcast.core.HazelcastInstance;
-
 import de.jotschi.orientdb.test.AbstractClusterTest;
-import de.jotschi.orientdb.test.Database;
 import de.jotschi.orientdb.test.task.AbstractLoadTask;
 
 /**
@@ -27,19 +22,7 @@ public class BackupTask extends AbstractLoadTask {
 
 	@Override
 	public void runTask(long txDelay, boolean lockTx, boolean lockForDBSync) {
-		Lock lock = null;
-		if (lockTx) {
-			HazelcastInstance hz = test.getDb().getHazelcast();
-			lock = hz.getLock(Database.TX_LOCK_KEY);
-			lock.lock();
-		}
-		try {
-			test.getDb().backup();
-		} finally {
-			if (lock != null) {
-				lock.unlock();
-			}
-		}
+		test.getDb().backup();
 	}
 
 }

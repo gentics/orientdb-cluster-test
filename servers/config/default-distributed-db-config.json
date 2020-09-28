@@ -1,19 +1,15 @@
 {
   "autoDeploy": true,
-  "hotAlignment": true,
-  "executionMode": "synchronous",
   "readQuorum": 1,
-  "writeQuorum": 2,
-  "failureAvailableNodesLessQuorum": false,
+  "writeQuorum": "majority",
+  "executionMode": "undefined",
   "readYourWrites": true,
+  "newNodeStrategy": "static",
   "servers": {
-    "*": "master",
-    "node-backup": "replica"
+    "*": "master"
   },
   "clusters": {
     "internal": {
-    },
-    "index": {
     },
     "*": {
       "servers": ["<NEW_NODE>"]

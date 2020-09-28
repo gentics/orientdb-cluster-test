@@ -52,7 +52,7 @@ public class Database {
 	private String httpPort;
 	private String binPort;
 	private LatchingDistributedLifecycleListener listener;
-	private HazelcastInstance hazelcastInstance;
+	//private HazelcastInstance hazelcastInstance;
 
 	public Database(String nodeName, String basePath, String httpPort, String binPort) {
 		this.nodeName = nodeName;
@@ -75,9 +75,11 @@ public class Database {
 		System.setProperty("ORIENTDB_PLUGIN_DIR", "orient-plugins");
 		System.setProperty("plugin.directory", "plugins");
 		System.setProperty("ORIENTDB_CONFDIR_NAME", "config");
+		System.setProperty("ORIENTDB_CONFDIR_PATH", new File("config").getAbsolutePath());
 		System.setProperty("ORIENTDB_NODE_NAME", nodeName);
 		System.setProperty("ORIENTDB_DISTRIBUTED", "true");
 		System.setProperty("ORIENTDB_DB_PATH", escapePath(basePath));
+		System.setProperty("ORIENTDB_HOME", "/media/ext4/db");
 		configString = PropertyUtil.resolve(configString);
 		return configString;
 	}
@@ -103,7 +105,7 @@ public class Database {
 			manager.config(server);
 			server.activate();
 			ODistributedServerManager distributedManager = server.getDistributedManager();
-			this.listener = new LatchingDistributedLifecycleListener(nodeName, hazelcastInstance);
+			this.listener = new LatchingDistributedLifecycleListener(nodeName);
 			distributedManager.registerLifecycleListener(listener);
 
 			manager.startup();
@@ -123,13 +125,7 @@ public class Database {
 	}
 
 	public void startHazelcast() throws FileNotFoundException {
-		Optional<OServerHandlerConfiguration> hazelcastPluginConfigOpt = server.getConfiguration().handlers.stream()
-			.filter(e -> e.clazz.equals(CustomOHazelcastPlugin.class.getName())).findFirst();
-		if (!hazelcastPluginConfigOpt.isPresent()) {
-			throw new RuntimeException("Could not find hazelcast plugin configuration in orientdb configuration file");
-		}
-		OServerHandlerConfiguration hazelcastPluginConfig = hazelcastPluginConfigOpt.get();
-		hazelcastInstance = CustomOHazelcastPlugin.createHazelcast(hazelcastPluginConfig.parameters);
+		//hazelcastInstance = CustomOHazelcastPlugin.createHazelcast(hazelcastPluginConfig.parameters);
 	}
 
 	public void addEdgeType(Supplier<OrientGraphNoTx> txProvider, String label, String superTypeName) {
@@ -220,7 +216,7 @@ public class Database {
 	}
 
 	public void openLocally(String name) {
-		File base = new File("target", nodeName);
+		File base = new File("/media/ext4/db", nodeName);
 		factory = new OrientGraphFactory("plocal:" + new File(base, name).getAbsolutePath()).setupPool(16, 100);
 	}
 
@@ -234,9 +230,6 @@ public class Database {
 		}
 	}
 
-	public HazelcastInstance getHazelcast() {
-		return hazelcastInstance;
-	}
 
 	public void backup() {
 		DateFormat formatter = new SimpleDateFormat("dd-MM-yyyy_HH-mm-ss-SSS");

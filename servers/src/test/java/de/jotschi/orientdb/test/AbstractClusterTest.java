@@ -62,7 +62,7 @@ public abstract class AbstractClusterTest {
 	protected void setup(String name, String httpPort, String binPort) throws Exception {
 		this.nodeName = name;
 		//FileUtils.deleteDirectory(new File("target/" + name));
-		initDB(name, "target/" + name, httpPort, binPort);
+		initDB(name, "/media/ext4/db/" + name, httpPort, binPort);
 	}
 
 	public void initDB(String name, String graphDbBasePath, String httpPort, String binPort) throws Exception {
