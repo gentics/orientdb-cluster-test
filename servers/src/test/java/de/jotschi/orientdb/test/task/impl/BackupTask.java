@@ -1,17 +1,11 @@
 package de.jotschi.orientdb.test.task.impl;
 
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.locks.Lock;
 
 import com.hazelcast.core.HazelcastInstance;
-import com.orientechnologies.common.concur.ONeedRetryException;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
-import com.tinkerpop.blueprints.Vertex;
 
 import de.jotschi.orientdb.test.AbstractClusterTest;
 import de.jotschi.orientdb.test.Database;
-import de.jotschi.orientdb.test.Utils;
 import de.jotschi.orientdb.test.task.AbstractLoadTask;
 
 /**

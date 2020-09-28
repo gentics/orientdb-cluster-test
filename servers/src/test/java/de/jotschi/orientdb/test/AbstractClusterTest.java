@@ -34,7 +34,7 @@ public abstract class AbstractClusterTest {
 
 	// Define the test parameter
 	static final long txDelay = 0;
-	static final boolean lockTx = true;
+	static final boolean lockTx = false;
 	static final boolean lockForDBSync = false;
 
 	public static final String HAS_PRODUCT = "HAS_PRODUCT";
@@ -61,7 +61,7 @@ public abstract class AbstractClusterTest {
 
 	protected void setup(String name, String httpPort, String binPort) throws Exception {
 		this.nodeName = name;
-		FileUtils.deleteDirectory(new File("target/" + name));
+		//FileUtils.deleteDirectory(new File("target/" + name));
 		initDB(name, "target/" + name, httpPort, binPort);
 	}
 

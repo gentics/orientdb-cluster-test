@@ -96,8 +96,8 @@ public class Database {
 		server.startup(getOrientServerConfig());
 		startHazelcast();
 
-		ILock lock = hazelcastInstance.getLock(TX_LOCK_KEY);
-		lock.lock();
+//		ILock lock = hazelcastInstance.getLock(TX_LOCK_KEY);
+//		lock.lock();
 		try {
 			OServerPluginManager manager = new OServerPluginManager();
 			manager.config(server);
@@ -117,7 +117,7 @@ public class Database {
 
 		} finally {
 			System.out.println("Releasing lock");
-			lock.unlock();
+//			lock.unlock();
 		}
 		return server;
 	}
@@ -186,9 +186,9 @@ public class Database {
 
 	private void postStartupDBEventHandling() {
 		// Get the database status
-		DB_STATUS status = server.getDistributedManager().getDatabaseStatus(nodeName, "storage");
+		//DB_STATUS status = server.getDistributedManager().getDatabaseStatus(nodeName, "storage");
 		// Pass it along to the topology event bridge
-		listener.onDatabaseChangeStatus(nodeName, "storage", status);
+		//listener.onDatabaseChangeStatus(nodeName, "storage", status);
 	}
 
 	private void waitForDB() throws InterruptedException {
