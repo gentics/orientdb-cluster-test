@@ -1,6 +1,5 @@
 package de.jotschi.orientdb.test;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +10,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-import org.apache.commons.io.FileUtils;
-
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -26,11 +22,6 @@ import com.tinkerpop.blueprints.impls.orient.OrientVertexType;
 import de.jotschi.orientdb.test.task.LoadTask;
 
 public abstract class AbstractClusterTest {
-
-	static {
-		// Disable direct IO (My dev system uses ZFS. Otherwise the test will not run)
-		System.setProperty("storage.wal.allowDirectIO", "false");
-	}
 
 	// Define the test parameter
 	static final long txDelay = 0;
@@ -59,16 +50,8 @@ public abstract class AbstractClusterTest {
 
 	public String nodeName;
 
-	protected void setup(String name, String httpPort, String binPort) throws Exception {
-		this.nodeName = name;
-		//FileUtils.deleteDirectory(new File("target/" + name));
-		initDB(name, "/media/ext4/db/" + name, httpPort, binPort);
-	}
-
-	public void initDB(String name, String graphDbBasePath, String httpPort, String binPort) throws Exception {
-		OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(Integer.MAX_VALUE);
-		OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY.setValue("target/backup_" + name);
-		db = new Database(name, graphDbBasePath, httpPort, binPort);
+	protected void setup(String url, String username, String password) throws Exception {
+		db = new Database(url, username, password);
 	}
 
 	public <T> T tx(Function<OrientBaseGraph, T> handler) {
@@ -220,9 +203,6 @@ public abstract class AbstractClusterTest {
 	protected void waitAndShutdown() throws IOException {
 		System.out.println("Press any key to shutdown the instance");
 		System.in.read();
-		Utils.sleep(5000);
-		db.getServer().shutdown();
-
 	}
 
 	public void insertProducts(long nProducts) {

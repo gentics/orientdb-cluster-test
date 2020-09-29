@@ -6,4 +6,7 @@ target
 orient-plugins
 backup
 databases
+orientdb-3.0.34-nodeA
+orientdb-3.0.34-nodeB
+orientdb-3.0.34-nodeC
 .factorypath

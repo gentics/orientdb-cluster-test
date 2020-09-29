@@ -3,13 +3,9 @@ package de.jotschi.orientdb.test;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.orientechnologies.orient.core.Orient;
-
 import de.jotschi.orientdb.test.task.impl.ProductUpdaterTask;
 
-public class OrientDBClusterTestNodeA extends AbstractClusterTest {
-
-	private final String NODE_NAME = "nodeA";
+public class OrientDBClusterLoadTest extends AbstractClusterTest {
 
 	private static final long PRODUCT_COUNT = 100L;
 
@@ -17,29 +13,26 @@ public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 
 	@Before
 	public void setup() throws Exception {
-		setup(NODE_NAME, "2480-2480", "2424-2424");
+		setup("localhost", "root", "finger");
+		db.create("storage");
 	}
 
 	@Test
 	public void testCluster() throws Exception {
 		createInitialDB();
 
-		// Now start the OServer and provide the database to other nodes
-		db.startOrientServer(false);
-
+		db.openRemotely("storage");
 		triggerLoad(new ProductUpdaterTask(this));
-
 		waitAndShutdown();
+		db.close();
 
 	}
 
 	// Initially create the needed types and vertices
 	private void createInitialDB() {
-		Orient.instance().startup();
-		db.openLocally("storage");
+		db.openRemotely("storage");
 		setupDB();
 		db.close();
-		Orient.instance().shutdown();
 	}
 
 	// Setup needed types
