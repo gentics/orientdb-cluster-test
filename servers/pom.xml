@@ -4,7 +4,7 @@
 	<artifactId>orientdb-cluster-servers</artifactId>
 
 	<parent>
-		<groupId>de.jotschi.orientdb</groupId>
+		<groupId>com.gentics.orientdb</groupId>
 		<artifactId>orientdb-cluster-test</artifactId>
 		<version>0.0.1-SNAPSHOT</version>
 	</parent>
