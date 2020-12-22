@@ -7,6 +7,14 @@ import com.orientechnologies.orient.core.Orient;
 
 import de.jotschi.orientdb.test.task.impl.ProductUpdaterTask;
 
+/**
+ * This test starts a OrientDB server instance. After the test has been started you can trigger a write load by pressing enter up to 4 times. With each step
+ * additional threads will be started to increase the write load. The {@link OrientDBClusterTestNodeB}, {@link OrientDBClusterTestNodeC} and
+ * {@link OrientDBClusterTestBackupNode} tests can be used to launch additional cluster instances.
+ * 
+ * The goal of this test to reproduce OrientDB cluster instabilities which can occur pre 3.1.3 release when restarting node B, or C during an active load on
+ * another node (e.g node A).
+ */
 public class OrientDBClusterTestNodeA extends AbstractClusterTest {
 
 	private final String NODE_NAME = "nodeA";

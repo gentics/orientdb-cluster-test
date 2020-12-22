@@ -3,6 +3,9 @@ package de.jotschi.orientdb.test;
 import org.junit.Before;
 import org.junit.Test;
 
+/**
+ * @see OrientDBClusterTestNodeA
+ */
 public class OrientDBClusterTestNodeC extends AbstractClusterTest {
 
 	private final String NODE_NAME = "nodeC";

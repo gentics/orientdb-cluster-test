@@ -5,6 +5,10 @@ import org.junit.Test;
 
 import de.jotschi.orientdb.test.task.impl.BackupTask;
 
+
+/**
+ * @see OrientDBClusterTestNodeA
+ */
 public class OrientDBClusterTestBackupNode extends AbstractClusterTest {
 
 	private final String NODE_NAME = "node-backup";
