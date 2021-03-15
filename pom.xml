@@ -12,7 +12,7 @@
 	</modules>
 
 	<properties>
-		<orientdb.version>3.1.6</orientdb.version>
+		<orientdb.version>3.1.9</orientdb.version>
 	</properties>
 
 	<dependencyManagement>
